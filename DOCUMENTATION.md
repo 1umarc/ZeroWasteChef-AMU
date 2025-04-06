@@ -169,9 +169,22 @@ For the implementation of our ZeroWasteChef prototype, we selected the following
 ### 6.3. Coding Challenge Faced During Development
 A significant coding challenge arose where the application would occasionally create two separate "Inventory" Google Sheets upon the first launch by a new user. This inconsistent behavior was confusing and disrupted the intended single-source-of-truth for the user's food inventory.
 
-**Initial Debugging and Misdirection:** My initial debugging efforts focused on the `sheetservice.gs` file, specifically the `getUserSheet()` and `getInventorySheet()` functions. The `getUserSheet()` function was designed to retrieve the existing "Inventory" sheet or create one if it didn't exist. It began by attempting to get the first sheet in the spreadsheet (which defaults to "Sheet1") and then checked if its name was "Inventory". If not, it would rename it. My initial (incorrect) hypothesis was that during the first run, the two calls to data loading functions might be racing. The first call would rename "Sheet1" to "Inventory," and the second call, finding no sheet named "Sheet1," would incorrectly trigger the creation of a *new* "Inventory" sheet. I also explored potential issues within `getInventorySheet()`, which handles the creation of the spreadsheet itself, but these investigations proved fruitless.
+**Initial Debugging and Misdirection:** Initial debugging efforts focused on the `sheetservice.gs` file, specifically the `getUserSheet()` and `getInventorySheet()` functions. The `getUserSheet()` function was designed to retrieve the existing "Inventory" sheet or create one if it didn't exist. The function attemps to get the first sheet in the spreadsheet (which defaults to "Sheet1") and then checked if its name was "Inventory". If not, it would rename it. An initial (incorrect) hypothesis was that the first `getUserSheet()` call would rename "Sheet1" to "Inventory," and the second call, finding no sheet named "Sheet1," would incorrectly trigger the creation of a *new* "Inventory" sheet. Potential issues were also explored within `getInventorySheet()`, which handles the creation of the spreadsheet itself, but these investigations proved fruitless.
 
-**Identifying the Root Cause through Execution Logs:** After spending over two hours on these initial, ultimately incorrect, theories, I turned to the Google Apps Script execution logs for deeper insight. The logs revealed a crucial detail whereby the two client-side functions responsible for loading inventory data, `loadExpiringItems()` and `loadAllItems()`, were being called **almost simultaneously**
+**Identifying the Root Cause through Execution Logs:** After spending over two hours on these ultimately incorrect theories, Google Apps Script execution logs gave a deeper insight. The logs revealed a crucial detail, whereby the two client-side functions responsible for loading inventory data, `loadExpiringItems()` and `loadAllItems()`, were being called **almost simultaneously** upon the `DOMContentLoaded` event.
+
+**Analyzing the Parallel Execution:** Examining the `index.html` file confirmed this parallel execution with two separate `addEventListener` calls for the same event. Both `loadExpiringItems()` and `loadAllItems()` begin by calling `google.script.run.getUserSheet()` in `sheetservice.gs`. This meant that the logic to find or create the "Inventory" sheet was being executed twice, concurrently, during the initial application load.
+
+**The Concurrency Conflict:** The parallel execution of `getUserSheet()` created a race condition. In the brief window between the two calls:
+
+1.  The first call to `getUserSheet()` would successfully find no "Inventory" sheet (if it's the very first time the user runs the app), create the "Inventory" spreadsheet, and rename the default "Sheet1" to "Inventory."
+2.  The second, concurrent call to `getUserSheet()` would also start its process. Depending on the timing, it might:
+    * Still not find an "Inventory" sheet if the first call hadn't completed the renaming process, leading to the creation of a *second* "Inventory" sheet.
+    * Find the "Inventory" sheet created by the first call but still proceed with its subsequent data loading logic, which wasn't the primary issue but contributed to potential confusion.
+
+The core problem was the concurrent, independent execution of the sheet initialization logic.
+
+**The Solution:** To address this race condition, a centralized initialization function was implemented in `index.html` called `initializeApp()`. 
 
 ### 6.4. Uncompleted Features and Future Incorporations
 Given more time, we would have incorporated several features to further enhance the ZeroWasteChef prototype and provide a more comprehensive user experience. We focused on the core functionality of inventory management and AI-driven meal suggestions for this initial version. However, we have identified several key areas for future development:
