@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ZeroWasteChef</title>
+  <style>
+    :root 
+    {
+      --primary: #4CAF50;
+      --primary-light: #81C784;
+      --primary-dark: #388E3C;
+      --warning: #FFB74D;
+      --danger: #E57373;
+      --danger-dark: #D32F2F;
+      --text: #2d3436;
+      --text-light: #636e72;
+      --background: rgba(255,255,255,0.98);
+      --card-shadow: 0 12px 24px -6px rgba(0,0,0,0.1);
+    }
+    
+    body 
+    {
+      font-family: 'Poppins', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-image: url('https://lh3.googleusercontent.com/d/10Lzy5wN92n_nbribXAf8KuZr1XtjFLJ6');
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+      background-position: center;
+      background-size: cover;
+    }
+
+    .container 
+    {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 30px;
+    }
+
+    .header-card 
+    {
+      grid-column: 1 / -1;
+      background: var(--background);
+      border-radius: 24px;
+      padding: 50px 40px;
+      text-align: center;
+      box-shadow: var(--card-shadow);
+      margin-bottom: 30px;
+      border: 1px solid rgba(0,0,0,0.05);
+
+      background-image: 
+      url('https://lh3.googleusercontent.com/d/1R2fhCQRSNQGmrnOCPfqTvnjxpoEhrP39'),
+      url('https://lh3.googleusercontent.com/d/1ukWlQhDQ5M_UZCK2uR7IBSxkb2Oys8Wy');
+
+      background-repeat: no-repeat;
+      background-position: 
+        left center,
+        right center;
+
+      background-size: 
+        auto 80%,
+        auto 80%;
+      padding: 50px 120px;
+    }
+
+    .card 
+    {
+      background: var(--background);
+      border-radius: 20px;
+      padding: 35px;
+      box-shadow: var(--card-shadow);
+      transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+      border: 1px solid rgba(0,0,0,0.05);
+      background-image: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(245,245,245,0.98) 100%);
+    }
+  
+    .card:hover 
+    {
+      transform: translateY(-5px);
+      box-shadow: 0 15px 30px -10px rgba(0,0,0,0.15);
+    }
+
+    h1 
+    {
+      color: var(--primary-dark);
+      font-size: 3rem;
+      margin: 0 0 15px 0;
+      font-weight: 700;
+      letter-spacing: -1px;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.05);
+      position: relative;
+      display: inline-block;
+    }
+
+    h1::after 
+    {
+      content: '';
+      position: absolute;
+      bottom: -5px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 80px;
+      height: 4px;
+      background: linear-gradient(90deg, var(--primary), var(--primary-light));
+      border-radius: 2px;
+    }
+
+    .header-card p 
+    {
+      color: var(--text-light);
+      font-size: 1.2rem;
+      margin: 0;
+      font-weight: 400;
+    }
+
+    h2 
+    {
+      color: var(--text);
+      font-size: 1.8rem;
+      margin: 0 0 30px 0;
+      padding-bottom: 15px;
+      position: relative;
+      font-weight: 600;
+    }
+
+    h2::after 
+    {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 60px;
+      height: 4px;
+      background: linear-gradient(90deg, var(--primary), var(--primary-light));
+      border-radius: 2px;
+    }
+
+    .management-section 
+    {
+      display: grid;
+      gap: 30px;
+      align-content: start;
+    }
+
+    .form-group input 
+    {
+      width: 95%;
+      max-width: 700px;
+      margin: 0 auto;
+      display: block;
+    }
+    
+    .status-section 
+    {
+      display: grid;
+      gap: 30px;
+      align-content: start;
+    }
+
+    .inventory-section 
+    {
+      grid-column: 1 / -1;
+    }
+
+    .form-group 
+    {
+      margin-bottom: 25px;
+    }
+
+    label 
+    {
+      display: block;
+      margin-bottom: 10px;
+      font-weight: 500;
+      color: var(--text-light);
+      font-size: 1rem;
+    }
+
+    input 
+    {
+      width: 100%;
+      padding: 16px;
+      border: 2px solid #e0e0e0;
+      border-radius: 12px;
+      font-size: 1.05rem;
+      transition: all 0.3s ease;
+      background: #f8f9fa;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    input:focus 
+    {
+      border-color: var(--primary);
+      background: white;
+      box-shadow: 0 5px 20px rgba(76,175,80,0.15);
+      outline: none;
+    }
+
+    button 
+    {
+      width: 100%;
+      padding: 18px;
+      border: none;
+      border-radius: 14px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    button[type="submit"] 
+    {
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: white;
+      margin-top: 25px;
+      box-shadow: 0 4px 12px rgba(76,175,80,0.3);
+    }
+
+    button[type="submit"]:hover 
+    {
+      opacity: 0.95;
+      box-shadow: 0 8px 20px rgba(76,175,80,0.4);
+      transform: translateY(-2px);
+    }
+
+    #suggestBtn 
+    {
+      background: linear-gradient(135deg, #6c5ce7, #4b44b6);
+      color: white;
+      box-shadow: 0 4px 12px rgba(108,92,231,0.3);
+    }
+
+    #suggestBtn:hover 
+    {
+      box-shadow: 0 8px 20px rgba(108,92,231,0.4);
+      transform: translateY(-2px);
+    }
+
+    .inventory-header 
+    {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 25px;
+      position: relative;
+    }
+
+    .inventory-actions 
+    {
+      display: flex;
+      gap: 10px;
+      position: absolute;
+      right: 0;
+      top: 0;
+    }
+
+    .bulk-action-btn {
+      border-radius: 8px;
+      font-size: 0.95rem;
+      border: none;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, var(--danger), var(--danger-dark));
+      color: white;
+    }
+
+    .delete-btn {
+      width: 40px;
+      height: 40px;
+      padding: 6px;
+    }
+
+    .delete-all-btn {
+      padding: 8px 15px;
+      gap: 8px;
+    }
+
+    .bulk-action-btn:hover 
+    {
+      transform: translateY(-2px);
+      opacity: 0.9;
+    }
+
+    #allItemsList, #expiringList, #expiredList 
+    {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: grid;
+      gap: 15px;
+    }
+
+    .inventory-item, .expiring-item, .expired-item 
+    {
+      padding: 20px;
+      border-radius: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      animation: fadeIn 0.4s ease;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+      transition: all 0.3s ease;
+    }
+
+    .inventory-item:hover, .expiring-item:hover, .expired-item:hover 
+    {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+    }
+
+    .inventory-item 
+    {
+      background: white;
+      border-left: 5px solid #f0f0f0;
+    }
+
+    .expiring-item 
+    {
+      background: #fff9e6;
+      border-left: 5px solid var(--warning);
+    }
+
+    .expired-item 
+    {
+      background: #ffe6e6;
+      border-left: 5px solid var(--danger);
+    }
+
+    .item-info 
+    {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .item-name 
+    {
+      font-weight: 600;
+      font-size: 1.1rem;
+      color: var(--text);
+    }
+
+    .item-details 
+    {
+      display: flex;
+      gap: 20px;
+      color: var(--text-light);
+      font-size: 0.95rem;
+    }
+
+    .item-details span 
+    {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    #suggestions 
+    {
+      background: white;
+      padding: 25px;
+      border-radius: 12px;
+      margin-top: 20px;
+      line-height: 1.7;
+      border: 2px solid #f0f0f0;
+      white-space: pre-wrap;
+      font-size: 1.05rem;
+    }
+
+    .loader 
+    {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid var(--primary);
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 30px auto;
+      display: none;
+    }
+
+    .empty-state 
+    {
+      text-align: center;
+      color: var(--text-light);
+      padding: 30px;
+      font-size: 1.1rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .empty-state span 
+    {
+      font-size: 2.5rem;
+    }
+
+    @keyframes spin 
+    {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    @keyframes fadeIn 
+    {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes float 
+    {
+      0% { transform: translateY(0px); }
+      50% { transform: translateY(-5px); }
+      100% { transform: translateY(0px); }
+    }
+
+    @media (max-width: 768px) 
+    {
+      body 
+      {
+        padding: 20px;
+      }
+      
+      .container 
+      {
+        grid-template-columns: 1fr;
+        gap: 20px;
+      }
+      
+      h1 
+      {
+        font-size: 2.4rem;
+      }
+      
+      .card 
+      {
+        padding: 25px;
+      }
+      
+      .header-card 
+      {
+        padding: 30px 20px;
+      }
+    }
+  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+  <div class="container">
+    <div class="header-card">
+      <h1>ZeroWasteChef</h1>
+      <p>Smart Food Management System</p>
+    </div>
+
+    <div class="management-section">
+      <div class="card">
+        <h2><i class="fas fa-plus-circle" style="color: var(--primary); margin-right: 10px;"></i>Add New Item</h2>
+        <form id="itemForm">
+          <div class="form-group">
+            <label for="itemName"><i class="fas fa-utensils"></i> Food Item</label>
+            <input type="text" id="itemName" required placeholder="e.g. Apples, Milk, Bread">
+          </div>
+          <div class="form-group">
+            <label for="quantity"><i class="fas fa-balance-scale"></i> Quantity</label>
+            <input type="text" id="quantity" required placeholder="e.g. 1 litre, 200 grams, 3 slices">
+          </div>
+          <div class="form-group">
+            <label for="expiryDate"><i class="far fa-calendar-alt"></i> Expiry Date</label>
+            <input type="date" id="expiryDate" required>
+          </div>
+          <button type="submit"><i class="fas fa-save"></i> Save Item</button>
+        </form>
+      </div>
+
+      <div class="card">
+        <h2><i class="fas fa-robot" style="color: #6c5ce7; margin-right: 10px;"></i>AI Recipes</h2>
+        <button id="suggestBtn" onclick="getSuggestions()"><i class="fas fa-magic"></i> Generate Recipes</button>
+        <div class="loader" id="loader"></div>
+        <div id="suggestions">Your personalized recipes will appear here...</div>
+      </div>
+    </div>
+
+    <div class="status-section">
+      <div class="card">
+        <h2><i class="fas fa-clock" style="color: var(--warning); margin-right: 10px;"></i>Expiring Soon (<4 days)</h2>
+        <ul id="expiringList"></ul>
+        <div id="noExpiring" class="empty-state">
+          <span>🎉</span>
+          <div>All items are fresh!</div>
+        </div>
+      </div>
+      
+      <div class="card">
+        <h2><i class="fas fa-exclamation-triangle" style="color: var(--danger); margin-right: 10px;"></i>Expired Items</h2>
+        <ul id="expiredList"></ul>
+        <div id="noExpired" class="empty-state">
+          <span>✅</span>
+          <div>No expired items!</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="inventory-header">
+          <h2><i class="fas fa-box-open" style="color: var(--primary-dark); margin-right: 10px;"></i>All Inventory Items</h2>
+          <div class="inventory-actions">
+            <button class="bulk-action-btn delete-all-btn" onclick="confirmDeleteAll()">
+              <i class="fas fa-trash"></i> Delete All
+            </button>
+          </div>
+        </div>
+
+        <ul id="allItemsList"></ul>
+        <div id="noItems" class="empty-state">
+          <span>🏁</span>
+          <div>Your inventory is empty.<br>Add some items to get started!</div>
+        </div>
+      </div>
+  </div>
+</div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', initializeApp);
+
+    // Function for setting up HTML page
+    function initializeApp() {
+      // Call Google Apps Script to set up sheet on page load
+      google.script.run
+        .withSuccessHandler(function() {
+          loadAllItems();
+          loadExpiringItems();
+        })
+        .getUserSheet()
+    }
+
+    // Form submission
+    document.getElementById('itemForm').addEventListener('submit', (e) => 
+    {
+      e.preventDefault();
+      const name = document.getElementById('itemName').value;
+      const quantity = document.getElementById('quantity').value;
+      const expiryDate = document.getElementById('expiryDate').value;
+      
+      google.script.run
+        .withSuccessHandler(() => 
+        {
+          alert('Item saved!');
+          document.getElementById('itemForm').reset();
+          loadExpiringItems();
+          loadAllItems();
+        })
+        .withFailureHandler((err) => 
+        {
+          alert('Error: ' + err.message);
+        })
+        .addItem(name, quantity, expiryDate); 
+    });
+
+    // Function for loading all inventory items
+    function loadAllItems() 
+    {
+      // Call Google Apps Script to retrieve all inventory items
+      google.script.run
+        .withSuccessHandler(function(items) 
+        {
+          const allItemsList = document.getElementById('allItemsList');
+          const noItems = document.getElementById('noItems');
+
+          // Clear previous items
+          allItemsList.innerHTML = '';
+
+          if (items.length === 0) 
+          {
+            // If no items, make noItems element visible
+            noItems.style.display = 'flex';
+          } 
+          else 
+          {
+            // If got, hide the element
+            noItems.style.display = 'none';
+            items.forEach(function(item) 
+            {
+              // Create new div and populate with HTML content for item details
+              const div = document.createElement('div');
+              div.className = 'inventory-item';
+              div.innerHTML = `
+                <div class="item-info">
+                  <div class="item-name">${item.item} (${item.quantity})</div>
+                  <div class="item-details">
+                    <span><i class="far fa-calendar-alt"></i> ${item.expiryDate}</span>
+                  </div>
+                </div>
+                <button class="bulk-action-btn delete-btn" onclick="deleteItem('${item.item}')">
+                  <i class="fas fa-trash"></i>
+                </button>
+              `;
+              allItemsList.appendChild(div);
+            });
+          }
+        })
+        .getAllItems();
+    }
+
+    // Function for deleting item
+    function deleteItem(itemName) 
+    {
+      // Call Google Apps Script to delete item
+      google.script.run
+        .withSuccessHandler(function(message) 
+        {
+          // Prompt message, refresh all lists
+          alert(message);
+          loadExpiringItems(); 
+          loadAllItems();
+        })
+        .deleteItem(itemName);
+    }
+
+    // Function for deleting all items
+    function confirmDeleteAll() 
+    {
+      if (confirm("Are you sure you want to delete all items?")) 
+      {
+        // Call Google Apps Script to delete all items
+        google.script.run
+          .withSuccessHandler(function(message) 
+          {
+            // Prompt message, refresh all lists
+            alert(message);
+            loadExpiringItems();
+            loadAllItems();
+          })
+          .deleteAllItems();
+      }
+    }
+
+    // Function for loading items that are either expiring soon / expired
+    function loadExpiringItems() 
+    {  
+        // Call Google Apps Script to fetch expiring and expired items
+        google.script.run  
+            .withSuccessHandler((data) => 
+            {  
+                console.log("Expiring Soon:", data.expiring);  
+                console.log("Expired:", data.expired);  
+
+                // Select elements
+                const expiringList = document.getElementById('expiringList');  
+                const noExpiring = document.getElementById('noExpiring');  
+                const expiredList = document.getElementById('expiredList');  
+                const noExpired = document.getElementById('noExpired');  
+
+                // Clear previous items
+                expiringList.innerHTML = '';  
+                expiredList.innerHTML = '';  
+
+                // Handle Expiring Soon Items
+                if (data.expiring.length === 0) 
+                {
+                    noExpiring.style.display = 'block';
+                } 
+                else 
+                {
+                    noExpiring.style.display = 'none';
+                    data.expiring.forEach(item => 
+                    {  
+                        // Create new div (Yellow) and populate with HTML content for item details
+                        const div = document.createElement('div');  
+                        div.className = 'expiring-item';  
+                        div.style.backgroundColor = "#FFF9C4";
+                        div.style.padding = "10px";  
+                        div.style.margin = "5px 0";  
+                        div.style.borderRadius = "5px";  
+                        div.style.display = "flex";  
+                        div.style.justifyContent = "space-between";  
+
+                        div.innerHTML = `  
+                            <span>${item.item} (${item.quantity})</span>  
+                            <span>${item.expiryDate}</span>  
+                        `;  
+                        expiringList.appendChild(div);  
+                    });
+                }
+
+                // Handle Expired Items
+                if (data.expired.length === 0) 
+                {
+                    noExpired.style.display = 'block';
+                } 
+                else 
+                {
+                    noExpired.style.display = 'none';
+                    data.expired.forEach(item => 
+                    {  
+                        // Create new div (Red) and populate with HTML content for item details
+                        const div = document.createElement('div');  
+                        div.className = 'expired-item';  
+                        div.style.backgroundColor = "#FFCDD2";
+                        div.style.padding = "10px";  
+                        div.style.margin = "5px 0";  
+                        div.style.borderRadius = "5px";  
+                        div.style.display = "flex";  
+                        div.style.justifyContent = "space-between";  
+
+                        div.innerHTML = `  
+                            <span>${item.item} (${item.quantity})</span>  
+                            <span>${item.expiryDate}</span>  
+                        `;  
+                        expiredList.appendChild(div);  
+                    });
+                }
+            })  
+            .getExpiringItems();
+    }
+
+    // Function for getting AI receipe suggestions
+    function getSuggestions() 
+    {
+      // Select necessary elements
+      const btn = document.getElementById('suggestBtn');
+      const loader = document.getElementById('loader');
+      const output = document.getElementById('suggestions');
+      
+      btn.disabled = true;
+      loader.style.display = 'block';
+      output.textContent = 'Thinking...';
+      
+      // Call Google Apps Script to get meal suggestions
+      google.script.run
+        .withSuccessHandler((result) => 
+        {
+          output.innerHTML = result.replace(/\n/g, '<br>');
+          loader.style.display = 'none';
+          btn.disabled = false;
+        })
+        .withFailureHandler((err) => 
+        {
+          output.textContent = 'Error: ' + err.message;
+          loader.style.display = 'none';
+          btn.disabled = false;
+        })
+        .getMealSuggestions();
+    }
+  </script>
+</body>
+</html>
