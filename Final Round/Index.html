@@ -1,0 +1,2671 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>ZeroWasteChef</title>
+  <!-- Fonts and Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+  <style>
+    /* --- Common Variables and Base Styles --- */
+    :root {
+      --primary: #4CAF50;
+      --primary-light: #81C784;
+      --primary-dark: #388E3C;
+      --warning: #FFB74D;
+      --danger: #E57373;
+      --danger-dark: #D32F2F;
+      --text: #2d3436;
+      --text-light: #636e72;
+      --background: rgba(255,255,255,0.98);
+      --card-shadow-desktop: 0 12px 24px -6px rgba(0,0,0,0.1);
+      --card-shadow-mobile: 0 18px 45px -18px rgba(0,0,0,0.2); /* Mobile shadow as default */
+
+      /* Font sizes (primarily for mobile reference, desktop might override) */
+      --font-size-large-label: 1.9rem;
+      --font-size-large-input: 1.8rem;
+      --font-size-large-button: 2.0rem;
+      --font-size-large-heading: 3.2rem;
+      --font-size-large-status: 1.4rem;
+      --font-size-large-list-item: 1.8rem;
+      --font-size-large-list-detail: 1.6rem;
+      --font-size-large-suggestions: 2.2rem;
+      --font-size-large-empty: 1.7rem;
+    }
+
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Poppins', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-image: url('https://www.mashed.com/img/gallery/the-trick-to-maintaining-color-in-your-cooked-vegetables/l-intro-1623262791.jpg');
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+      background-position: center;
+      background-size: cover;
+      color: var(--text);
+      box-sizing: border-box;
+      /* Default font size can be smaller, mobile overrides */
+      font-size: 16px;
+      -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none;
+      touch-action: manipulation;
+    }
+
+    /* Basic element resets/defaults */
+    button, input, textarea {
+        font-family: 'Poppins', sans-serif;
+        box-sizing: border-box;
+    }
+    ul { list-style: none; padding: 0; margin: 0; }
+
+    /* Common Loader */
+    .loader {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid var(--primary);
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 30px auto;
+      display: none; /* Hide initially */
+    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% transform(360deg); }
+    @keyframes slideUp { from { transform: translateX(-50%) translateY(100%); opacity: 0; } to { transform: translateX(-50%) translateY(0); opacity: 1; }}
+
+    /* Common Empty State */
+    .empty-state {
+      text-align: center;
+      color: var(--text-light);
+      padding: 30px;
+      font-size: 1.1rem;
+      display: none; /* Hide initially */
+      flex-direction: column;
+      align-items: center;
+      gap: 15px;
+      width: 100%;
+    }
+    .empty-state span { font-size: 2.5rem; }
+
+    /* Common Animations */
+     @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* --- Loading Indicator (Shown Before UI Injection) --- */
+    #loading-indicator {
+        display: flex; justify-content: center; align-items: center; height: 90vh; flex-direction: column; gap: 20px; color: #444; text-align: center; padding: 20px;
+    }
+    #loading-indicator .loader { /* Style the loader within the indicator */
+        border-width: 6px; border-top-width: 6px; border-top-color: #0B57D0;
+        width: 50px; height: 50px; display: block; margin-bottom: 10px;
+    }
+    #loading-indicator p { font-size: 1.3rem; font-weight: 500; }
+
+    /* --- App Root Container --- */
+    #app-root {
+        height: 100%;
+        display: flex; /* Helps child take full height */
+        flex-direction: column;
+    }
+
+    /* =========================================== */
+    /* --- DESKTOP SPECIFIC STYLES (.desktop-ui) --- */
+    /* =========================================== */
+    /* Note: These styles are largely taken from new.html's CSS */
+    .desktop-ui { /* Apply styles to the body when desktop UI is active */
+      font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f8fafc; /* Match new.html background */
+      margin: 0; /* Use padding on container instead */
+      padding: 0; /* Use padding on container instead */
+      color: var(--text);
+      line-height: 1.6;
+      overflow-y: auto !important; /* Allow body scrolling on desktop */
+      overflow-x: hidden; /* Prevent horizontal scroll */
+      font-size: 16px; /* Reset base font size for desktop */
+      height: auto; /* Allow height to grow beyond viewport */
+      min-height: 100%;
+      -webkit-user-select: auto; -moz-user-select: auto; -ms-user-select: auto; user-select: auto; /* Re-enable selection */
+      touch-action: auto; /* Re-enable touch actions */
+    }
+
+    .desktop-ui #app-root {
+      overflow: visible; /* Ensure the app root doesn't clip content */
+      height: auto; /* Let the app root grow with content */
+    }
+
+    .desktop-ui .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 20px; /* Add padding back to container */
+    }
+
+    /* Layout Styles */
+    .desktop-ui .grid-container {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 24px;
+    }
+
+    .desktop-ui .flex-container {
+      display: flex;
+      gap: 30px;
+    }
+
+    /* Card Styles */
+    .desktop-ui .card, .desktop-ui .navbar, .desktop-ui .header-card {
+      background: var(--card-bg, linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(248,250,252,0.95) 100%)); /* Use new.html var */
+      border-radius: 16px; /* Match new.html */
+      padding: 30px;
+      box-shadow: var(--card-shadow, 0 10px 20px -6px rgba(0,0,0,0.1)); /* Use new.html var */
+      transition: var(--common-transition, all 0.3s ease); /* Use new.html var */
+      border: 1px solid rgba(0,0,0,0.05);
+    }
+
+    .desktop-ui .card:hover {
+      transform: translateY(-4px); /* Match new.html */
+      box-shadow: var(--hover-shadow, 0 15px 30px -10px rgba(0,0,0,0.15)); /* Use new.html var */
+    }
+
+    .desktop-ui .navbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 24px; /* Match new.html */
+      margin-bottom: 24px;
+    }
+
+    .desktop-ui .header-card {
+      padding: 40px; /* Match new.html */
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    /* Navigation */
+    .desktop-ui .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px; /* Match new.html */
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--primary-dark);
+    }
+
+    .desktop-ui .logo-icon {
+      color: var(--primary);
+      font-size: 1.8rem; /* Match new.html */
+    }
+
+    .desktop-ui .nav-links {
+      display: flex;
+      gap: 24px; /* Match new.html */
+    }
+
+    .desktop-ui .nav-link {
+      color: var(--text-light);
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 0.95rem; /* Match new.html */
+      transition: var(--common-transition, all 0.3s ease); /* Use new.html var */
+      padding: 8px 12px; /* Match new.html */
+      border-radius: 6px; /* Match new.html */
+    }
+
+    .desktop-ui .nav-link:hover {
+      color: var(--primary);
+      background-color: rgba(46, 125, 50, 0.08); /* Match new.html */
+    }
+
+    .desktop-ui .nav-link.active {
+      color: var(--primary);
+      font-weight: 600;
+      background-color: rgba(46, 125, 50, 0.12); /* Match new.html */
+    }
+
+    /* Typography */
+    .desktop-ui h1, .desktop-ui h2, .desktop-ui h3, .desktop-ui h4 {
+      color: var(--primary-dark); /* Match new.html */
+      margin: 0 0 12px 0; /* Match new.html */
+      font-weight: 700; /* Match new.html */
+    }
+
+    .desktop-ui h1 {
+      font-size: 2.2rem; /* Match new.html */
+      letter-spacing: -0.5px; /* Match new.html */
+      position: relative;
+      display: inline-block;
+    }
+
+    .desktop-ui h1::after {
+      content: '';
+      position: absolute;
+      bottom: -5px; /* Match new.html */
+      left: 0; /* Match new.html */
+      width: 80px; /* Match new.html */
+      height: 4px; /* Match new.html */
+      background: linear-gradient(90deg, var(--primary), var(--primary-light)); /* Match new.html */
+      border-radius: 2px; /* Match new.html */
+    }
+
+    .desktop-ui h2 {
+      font-size: 1.5rem; /* Match new.html */
+      margin: 0 0 25px 0; /* Match new.html */
+      padding-bottom: 12px; /* Match new.html */
+      position: relative;
+      font-weight: 600;
+      color: var(--text); /* Match new.html */
+    }
+
+    .desktop-ui h2::after {
+      content: '';
+      position: absolute;
+      bottom: 0; /* Match new.html */
+      left: 0; /* Match new.html */
+      width: 50px; /* Match new.html */
+      height: 3px; /* Match new.html */
+      background: linear-gradient(90deg, var(--primary), var(--primary-light)); /* Match new.html */
+      border-radius: 2px; /* Match new.html */
+    }
+
+    .desktop-ui h3 {
+      font-size: 1.3rem; /* Match new.html */
+      margin: 20px 0 15px 0; /* Match new.html */
+    }
+
+    /* Form Styles */
+    .desktop-ui .form-group {
+      margin-bottom: 20px; /* Match new.html */
+    }
+
+    .desktop-ui label {
+      display: block;
+      margin-bottom: 8px; /* Match new.html */
+      font-weight: 500;
+      color: var(--text-light);
+      font-size: 0.95rem; /* Match new.html */
+    }
+
+    .desktop-ui input, .desktop-ui select, .desktop-ui textarea {
+      width: 100%;
+      box-sizing: border-box;
+      height: 48px; /* Match new.html */
+      padding: 0 16px; /* Match new.html */
+      border: 1px solid #e2e8f0; /* Match new.html */
+      border-radius: 8px; /* Match new.html */
+      font-size: 1rem; /* Match new.html */
+      background: white; /* Match new.html */
+      display: block;
+    }
+
+    .desktop-ui textarea {
+      height: auto; /* Match new.html */
+      padding: 12px 16px; /* Match new.html */
+    }
+
+    .desktop-ui select {
+      cursor: pointer;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%2364748b' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E"); /* Match new.html */
+      background-repeat: no-repeat;
+      background-position: calc(100% - 12px) center; /* Match new.html */
+      -moz-appearance: none;
+      -webkit-appearance: none;
+      appearance: none;
+      padding-right: 40px; /* Match new.html */
+    }
+
+    .desktop-ui input:focus, .desktop-ui select:focus, .desktop-ui textarea:focus {
+      border-color: var(--primary);
+      background: white;
+      box-shadow: 0 5px 15px rgba(46, 125, 50, 0.15); /* Match new.html */
+      outline: none;
+    }
+
+    /* Button Styles */
+    .desktop-ui button, .desktop-ui .btn {
+      padding: 16px; /* Match new.html */
+      border: none;
+      border-radius: 12px; /* Match new.html */
+      font-size: 1rem; /* Match new.html */
+      font-weight: 600;
+      letter-spacing: 0.3px; /* Match new.html */
+      cursor: pointer;
+      transition: var(--common-transition, all 0.3s ease); /* Use new.html var */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px; /* Match new.html */
+      font-family: 'Inter', sans-serif; /* Match new.html */
+    }
+
+    .desktop-ui button[type="submit"], .desktop-ui .primary-btn {
+      background: var(--gradient-primary, linear-gradient(135deg, #2e7d32, #005005)); /* Use new.html var */
+      color: white;
+      box-shadow: 0 4px 12px rgba(46, 125, 50, 0.3); /* Match new.html */
+      width: 100%;
+    }
+
+    .desktop-ui button[type="submit"]:hover, .desktop-ui .primary-btn:hover {
+      opacity: 0.95;
+      box-shadow: 0 8px 20px rgba(46, 125, 50, 0.4); /* Match new.html */
+      transform: translateY(-2px);
+    }
+
+    .desktop-ui .secondary-btn {
+      background: var(--gradient-secondary, linear-gradient(135deg, #546e7a, #29434e)); /* Use new.html var */
+      color: white;
+      box-shadow: 0 4px 12px rgba(84, 110, 122, 0.3); /* Match new.html */
+    }
+
+    .desktop-ui .secondary-btn:hover {
+      box-shadow: 0 8px 20px rgba(84, 110, 122, 0.4); /* Match new.html */
+      transform: translateY(-2px);
+    }
+
+    .desktop-ui .btn {
+      padding: 10px 20px; /* Match new.html */
+      text-decoration: none;
+      display: inline-block;
+      font-size: 0.95rem; /* Match new.html */
+    }
+
+    /* Inventory Styles */
+    .desktop-ui .inventory-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px; /* Match new.html */
+    }
+
+    .desktop-ui .inventory-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: grid;
+      gap: 12px; /* Match new.html */
+    }
+
+    .desktop-ui .inventory-item {
+      background: white;
+      padding: 16px; /* Match new.html */
+      border-left: 4px solid #e2e8f0; /* Match new.html */
+      border-radius: 12px; /* Match new.html */
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05); /* Match new.html */
+      transition: var(--common-transition, all 0.3s ease); /* Use new.html var */
+    }
+
+    .desktop-ui .inventory-item:hover {
+      transform: translateY(-3px); /* Match new.html */
+      box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1); /* Match new.html */
+    }
+
+    .desktop-ui .expiring-item {
+      background: #fffbeb; /* Match new.html */
+      border-left: 4px solid var(--warning); /* Match new.html */
+    }
+
+    .desktop-ui .expired-item {
+      background: #fef2f2; /* Match new.html */
+      border-left: 4px solid var(--danger); /* Match new.html */
+    }
+
+    .desktop-ui .item-info {
+      display: flex;
+      flex-direction: column;
+      gap: 6px; /* Match new.html */
+    }
+
+    .desktop-ui .item-name {
+      font-weight: 600;
+      font-size: 1rem; /* Match new.html */
+      color: var(--text);
+    }
+
+    .desktop-ui .item-details {
+      display: flex;
+      gap: 16px; /* Match new.html */
+      color: var(--text-light);
+      font-size: 0.9rem; /* Match new.html */
+    }
+
+    .desktop-ui .item-actions {
+      display: flex;
+      gap: 8px; /* Match new.html */
+    }
+
+    .desktop-ui .delete-btn {
+      width: 36px; /* Match new.html */
+      height: 36px; /* Match new.html */
+      padding: 8px; /* Match new.html */
+      border-radius: 8px; /* Match new.html */
+      background: var(--gradient-danger, linear-gradient(135deg, #d32f2f, #9a0007)); /* Use new.html var */
+      color: white;
+      cursor: pointer;
+    }
+
+    /* Statistics */
+    .desktop-ui .statistic-card {
+      text-align: center;
+      padding: 24px; /* Match new.html */
+    }
+
+    .desktop-ui .statistic-icon {
+      font-size: 2rem; /* Match new.html */
+      color: var(--primary-light);
+      margin-bottom: 10px; /* Match new.html */
+    }
+
+    .desktop-ui .statistic-value {
+      font-size: 2.5rem; /* Match new.html */
+      font-weight: 700;
+      color: var(--primary);
+      margin: 10px 0; /* Match new.html */
+    }
+
+    .desktop-ui .statistic-label {
+      color: var(--text-light);
+      font-size: 0.9rem; /* Match new.html */
+    }
+
+    /* Tab System */
+    .desktop-ui .tabs {
+      display: flex;
+      margin-bottom: 24px; /* Match new.html */
+      border-bottom: 1px solid #e2e8f0; /* Match new.html */
+      overflow-x: auto;
+    }
+
+    .desktop-ui .tab {
+      padding: 12px 24px; /* Match new.html */
+      font-weight: 600;
+      color: var(--text-light);
+      cursor: pointer;
+      transition: var(--common-transition, all 0.3s ease); /* Use new.html var */
+      white-space: nowrap;
+    }
+
+    .desktop-ui .tab.active {
+      color: var(--primary);
+      box-shadow: inset 0 -3px 0 var(--primary); /* Match new.html */
+    }
+
+    .desktop-ui .tab-content {
+      display: none;
+    }
+
+    .desktop-ui .tab-content.active {
+      display: block;
+    }
+
+    /* Combo Input */
+    .desktop-ui .combo-input-container {
+      position: relative;
+      width: 100%;
+    }
+
+    .desktop-ui .combo-select, .desktop-ui .combo-input {
+      width: 100%;
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid #d1d5db;
+      background-color: #fff;
+      font-size: 14px;
+    }
+
+    .desktop-ui .combo-input {
+      margin-top: 5px;
+    }
+
+    .desktop-ui .combo-select:focus, .desktop-ui .combo-input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(46, 125, 50, 0.2);
+    }
+
+    /* Recipe History */
+    .desktop-ui .recipe-history-item {
+      padding: 20px;
+      border-radius: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: white;
+      border-left: 5px solid #9b59b6; /* Match new.html */
+      box-shadow: 0 4px 10px rgba(0,0,0,0.05); /* Match new.html */
+      transition: all 0.3s ease; /* Match new.html */
+      animation: fadeIn 0.4s ease; /* Match new.html */
+      margin-bottom: 15px; /* Match new.html */
+    }
+
+    .desktop-ui .recipe-history-item:hover {
+      transform: translateY(-3px); /* Match new.html */
+      box-shadow: 0 8px 15px rgba(0,0,0,0.1); /* Match new.html */
+    }
+
+    .desktop-ui .view-recipe-btn {
+      background: #9b59b6; /* Match new.html */
+      color: white;
+      border: none;
+      border-radius: 8px;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.3s ease; /* Match new.html */
+    }
+
+    .desktop-ui .view-recipe-btn:hover {
+      background: #8e44ad; /* Match new.html */
+      transform: translateY(-2px); /* Match new.html */
+    }
+
+    .desktop-ui #recipeHistoryList {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: grid;
+      gap: 15px; /* Match new.html */
+    }
+
+    /* Help Center */
+    .desktop-ui .sidebar_HelpDesk {
+      position: static; /* Match new.html */
+      align-self: auto; /* Match new.html */
+      width: auto; /* Match new.html */
+      top: auto; /* Match new.html */
+    }
+
+    .desktop-ui .content {
+      flex: 1;
+      width: 100%;
+    }
+
+    .desktop-ui .toc {
+      list-style-type: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .desktop-ui .toc li {
+      margin-bottom: 10px; /* Match new.html */
+    }
+
+    .desktop-ui .toc a {
+      display: block;
+      padding: 10px 15px; /* Match new.html */
+      color: var(--text);
+      text-decoration: none;
+      border-radius: 8px; /* Match new.html */
+      transition: var(--common-transition, all 0.3s ease); /* Use new.html var */
+    }
+
+    .desktop-ui .toc a:hover {
+      background-color: rgba(46, 125, 50, 0.08); /* Match new.html */
+      color: var(--primary);
+    }
+
+    .desktop-ui .toc a.active {
+      background-color: rgba(46, 125, 50, 0.12); /* Match new.html */
+      color: var(--primary);
+      font-weight: 500;
+    }
+
+    .desktop-ui .toc .subtoc {
+      list-style-type: none;
+      padding-left: 20px; /* Match new.html */
+      margin-top: 5px; /* Match new.html */
+    }
+
+    .desktop-ui .toc .subtoc a {
+      padding: 6px 15px; /* Match new.html */
+      font-size: 0.9rem; /* Match new.html */
+    }
+
+    /* Feature Cards */
+    .desktop-ui .feature-card {
+      display: flex;
+      align-items: flex-start;
+      gap: 15px; /* Match new.html */
+      margin-bottom: 20px; /* Match new.html */
+    }
+
+    .desktop-ui .feature-icon {
+      flex-shrink: 0;
+      width: 50px; /* Match new.html */
+      height: 50px; /* Match new.html */
+      background: rgba(46, 125, 50, 0.1); /* Match new.html */
+      color: var(--primary);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem; /* Match new.html */
+    }
+
+    .desktop-ui .feature-content {
+      flex: 1;
+    }
+
+    .desktop-ui .feature-title {
+      font-weight: 600;
+      margin: 0 0 5px 0; /* Match new.html */
+    }
+
+    /* Info boxes */
+    .desktop-ui .tip-box {
+      background-color: rgba(46, 125, 50, 0.08); /* Match new.html */
+      border-left: 4px solid var(--primary); /* Match new.html */
+      padding: 15px 20px; /* Match new.html */
+      margin: 20px 0; /* Match new.html */
+      border-radius: 8px; /* Match new.html */
+    }
+
+    .desktop-ui .tip-title {
+      font-weight: 600;
+      color: var(--primary-dark);
+      display: flex;
+      align-items: center;
+      gap: 8px; /* Match new.html */
+      margin-bottom: 10px; /* Match new.html */
+    }
+
+    /* Empty State */
+    .desktop-ui .empty-state {
+      text-align: center;
+      padding: 40px 20px; /* Match new.html */
+      color: var(--text-light);
+    }
+
+    .desktop-ui .empty-icon {
+      font-size: 3rem; /* Match new.html */
+      color: #e2e8f0;
+      margin-bottom: 16px; /* Match new.html */
+    }
+
+    /* AI Recipe Suggestion */
+    .desktop-ui .ai-suggestion {
+      background: rgba(46, 125, 50, 0.08); /* Match new.html */
+      border-radius: 12px; /* Match new.html */
+      padding: 20px; /* Match new.html */
+      border-left: 4px solid var(--primary); /* Match new.html */
+      margin-bottom: 24px; /* Match new.html */
+    }
+
+    .desktop-ui .ai-title {
+      display: flex;
+      align-items: center;
+      gap: 8px; /* Match new.html */
+      font-weight: 600;
+      color: var(--primary-dark);
+      margin-bottom: 16px; /* Match new.html */
+    }
+
+    /* Star Rating */
+    .desktop-ui .star-rating {
+      display: flex;
+      gap: 10px; /* Match new.html */
+      font-size: 1.5rem; /* Match new.html */
+      color: #d1d5db;
+      direction: rtl;
+    }
+
+    .desktop-ui .star-rating > label {
+      cursor: pointer;
+    }
+
+    .desktop-ui .star-rating > input {
+      display: none;
+    }
+
+    .desktop-ui .star-rating > label:hover,
+    .desktop-ui .star-rating > label:hover ~ label,
+    .desktop-ui .star-rating > input:checked ~ label {
+      color: #fbbf24; /* Match new.html */
+    }
+
+    /* Section layouts */
+    .desktop-ui .inventory-section, .desktop-ui .status-section {
+      grid-column: span 6;
+    }
+
+    .desktop-ui .add-item-section {
+      grid-column: span 5;
+    }
+
+    .desktop-ui .show-inventory-section {
+      grid-column: span 7;
+    }
+
+    .desktop-ui .recipe-generator {
+      grid-column: span 12; /* Default span 8, but new.html is span 12 */
+    }
+
+    .desktop-ui .recipe-list { /* Not used in new.html grid */
+      grid-column: span 6;
+    }
+
+    /* Code styling */
+    .desktop-ui code {
+      background: #f1f5f9;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 0.9em;
+    }
+
+    /* Save to Docs Button Styles */
+    .desktop-ui .save-to-docs-btn {
+      background: linear-gradient(135deg, #2e7d32); /* Match new.html */
+      color: green;
+      padding: 12px 20px; /* Match new.html */
+      border-radius: 8px; /* Match new.html */
+      display: flex; /* Use flex for center content */
+      align-items: center;
+      justify-content: center;
+      gap: 8px; /* Match new.html */
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease; /* Match new.html */
+      box-shadow: 0 4px 12px rgba(46, 125, 50, 0.3); /* Match new.html */
+      margin-top: 15px; /* Match new.html */
+      width: 100%; /* Match new.html */
+      background: var(--gradient-primary); /* Match new.html */
+    }
+
+    .desktop-ui .save-to-docs-btn:hover {
+      box-shadow: 0 4px 12px rgba(46, 125, 50, 0.3); /* Match new.html */
+      transform: translateY(-2px); /* Match new.html */
+    }
+
+    .desktop-ui .recipe-actions {
+      display: flex;
+      gap: 15px; /* Match new.html */
+      margin-top: 20px; /* Match new.html */
+    }
+
+    .desktop-ui .recipe-card {
+      background: white;
+      border-radius: 12px; /* Match new.html */
+      padding: 20px; /* Match new.html */
+      margin-bottom: 20px; /* Match new.html */
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05); /* Match new.html */
+      transition: all 0.3s ease; /* Match new.html */
+    }
+
+    /* Recipe saved confirmation */
+    .desktop-ui .save-confirmation {
+      background: rgba(46, 125, 50, 0.1); /* Match new.html */
+      border-left: 4px solid var(--primary); /* Match new.html */
+      padding: 10px 15px; /* Match new.html */
+      border-radius: 8px; /* Match new.html */
+      display: flex;
+      align-items: center;
+      gap: 10px; /* Match new.html */
+      margin-top: 15px; /* Match new.html */
+      animation: fadeIn 0.5s ease; /* Match new.html */
+    }
+
+    /* Media Queries - Adapt base new.html queries for .desktop-ui */
+     @media (min-width: 1201px) { /* Only apply desktop styles above mobile breakpoint */
+      .desktop-ui .grid-container {
+        grid-template-columns: repeat(12, 1fr); /* Original new.html desktop grid */
+      }
+
+      .desktop-ui .inventory-section,
+      .desktop-ui .status-section {
+         grid-column: span 6; /* Original new.html desktop */
+      }
+
+      .desktop-ui .add-item-section {
+         grid-column: span 5; /* Original new.html desktop */
+      }
+
+      .desktop-ui .show-inventory-section {
+         grid-column: span 7; /* Original new.html desktop */
+      }
+
+      .desktop-ui .recipe-generator {
+         grid-column: span 8; /* Original new.html recipe generator span */
+      }
+
+      .desktop-ui .recipe-list { /* Added for recipe history positioning */
+         grid-column: span 4;
+      }
+
+       .desktop-ui .status-section { /* Specific grid for the 3 stats cards */
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 24px;
+        grid-column: span 12; /* Occupy full width below header */
+        margin-bottom: 24px;
+      }
+
+       .desktop-ui #home-tab .grid-container > .inventory-section {
+          grid-column: span 6; /* Home tab left side */
+       }
+
+       .desktop-ui #home-tab .grid-container > .status-section {
+           grid-column: span 6; /* Home tab right side */
+           display: grid; /* Ensure it's a grid itself */
+           grid-template-columns: repeat(1, 1fr); /* Stack stats vertically */
+           gap: 24px;
+       }
+         /* Re-arrange stats for desktop home tab side panel */
+       .desktop-ui #home-tab .status-section .card:nth-child(1) { order: 1; }
+       .desktop-ui #home-tab .status-section .card:nth-child(2) { order: 2; }
+       .desktop-ui #home-tab .status-section .card:nth-child(3) { order: 3; }
+
+
+       /* Inventory Tab Layout */
+        .desktop-ui #inventory-tab .grid-container > .add-item-section {
+           grid-column: span 5;
+        }
+        .desktop-ui #inventory-tab .grid-container > .show-inventory-section {
+           grid-column: span 7;
+        }
+
+       /* Recipes Tab Layout */
+        .desktop-ui #recipes-tab .grid-container > .recipe-generator {
+           grid-column: span 8;
+        }
+        .desktop-ui #recipes-tab .grid-container > .card:nth-child(2) { /* Recipe History card */
+            grid-column: span 4;
+        }
+
+        /* Feedback Tab Layout */
+        .desktop-ui #feedback-tab .feedback-container {
+           display: grid;
+           grid-template-columns: repeat(2, 1fr);
+           gap: 24px;
+        }
+
+        /* Help Tab Layout */
+        .desktop-ui #Help-tab .flex-container {
+           flex-direction: row;
+           gap: 24px;
+        }
+        .desktop-ui #Help-tab .sidebar_HelpDesk {
+          flex-basis: 300px; /* Give sidebar a fixed width */
+          flex-shrink: 0;
+        }
+        .desktop-ui #Help-tab .content {
+          flex-grow: 1;
+        }
+
+
+     }
+
+    /* Hide mobile-only elements on desktop */
+    .desktop-ui .hidden-file-input,
+    .desktop-ui .image-extract-btn,
+    .desktop-ui .field-status,
+    .desktop-ui .input-with-button-container,
+    .desktop-ui .mobile-swiper-container,
+    .desktop-ui #mobile-page-indicator,
+    .desktop-ui .help-icon {
+        display: none !important;
+    }
+
+    /* --- END DESKTOP STYLES --- */
+
+
+    /* =========================================== */
+    /* --- MOBILE SPECIFIC STYLES --- */
+    /* =========================================== */
+    .mobile-ui body {
+        font-size: 18px;
+        -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none;
+        touch-action: manipulation;
+        overflow: hidden; /* Prevent body scroll, allow swiper scroll */
+        height: 100%; /* Ensure body takes full height */
+    }
+    /* --- Mobile App Container (Takes Full Height) --- */
+    .mobile-ui .app-container {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      width: 100%;
+    }
+    /* --- Mobile Header --- */
+    .mobile-ui .header-card {
+      background: var(--background);
+      padding: 30px 30px 30px 30px;
+      text-align: center;
+      flex-shrink: 0;
+      box-shadow: 0 6px 15px rgba(0,0,0,0.09);
+      border-bottom: 1px solid rgba(0,0,0,0.05);
+      z-index: 10;
+      position: relative;
+      background-size: auto 150px, auto 150px;
+      background-position: left 0px center, right 0px center;
+      background-repeat: no-repeat;
+    }
+    .mobile-ui .header-card h1 { color: var(--primary-dark); font-size: 2.8rem; margin: 0 0 10px 0; font-weight: 700; letter-spacing: -0.5px; }
+    .mobile-ui .header-card p { color: var(--text-light); font-size: 1.4rem; margin: 0; font-weight: 400; }
+
+    /* --- Mobile Swiper --- */
+    .mobile-ui .mobile-swiper-container {
+      flex-grow: 1;
+      display: flex;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      position: relative;
+      width: 100%;
+      height: 0; /* Let flex-grow handle height */
+      min-height: 0;
+      order: 2;
+    }
+    .mobile-ui .mobile-swiper-container::-webkit-scrollbar { display: none; }
+
+    .mobile-ui .swiper-slide {
+      flex: 0 0 100%;
+      width: 100%;
+      height: 100%;
+      scroll-snap-align: start;
+      box-sizing: border-box;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      align-items: center;
+      padding: 20px 5px;
+    }
+    .mobile-ui .card {
+      background: var(--background);
+      background-image: linear-gradient(135deg, rgba(255,255,255,0.97) 0%, rgba(249,249,249,0.98) 100%);
+      border-radius: 30px;
+      padding: 50px 35px;
+      box-shadow: var(--card-shadow-mobile);
+      border: 1px solid rgba(0,0,0,0.05);
+      width: 100%;
+      max-width: 850px; /* Can be large, slide padding constrains */
+      box-sizing: border-box;
+      flex-shrink: 0;
+      margin-top: auto;
+      margin-bottom: auto;
+    }
+    .mobile-ui h2 {
+      color: var(--text);
+      font-size: var(--font-size-large-heading);
+      margin: 0 0 55px 0;
+      padding-bottom: 22px;
+      position: relative;
+      font-weight: 600;
+      text-align: center;
+      line-height: 1.3;
+    }
+    .mobile-ui h2 i { margin-right: 15px; }
+    .mobile-ui h2::after {
+      content: ''; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
+      width: 120px; height: 6px;
+      background: linear-gradient(90deg, var(--primary), var(--primary-light));
+      border-radius: 4px;
+    }
+    .mobile-ui .form-group {
+      margin-bottom: 50px;
+      position: relative;
+    }
+    .mobile-ui .form-group:last-of-type {
+      margin-bottom: 55px;
+    }
+    .mobile-ui label {
+      display: block;
+      margin-bottom: 20px;
+      font-weight: 500;
+      color: var(--text-light);
+      font-size: var(--font-size-large-label);
+    }
+    .mobile-ui label i { margin-right: 12px; width: 1.3em; text-align: center; }
+    .mobile-ui input, .mobile-ui textarea {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 30px 25px;
+      border: 3px solid #e0e0e0;
+      border-radius: 26px;
+      font-size: var(--font-size-large-input);
+      transition: all 0.3s ease;
+      background: #f8f9fa;
+      font-family: 'Poppins', sans-serif;
+    }
+    .mobile-ui textarea { min-height: 140px; }
+    .mobile-ui input:focus, .mobile-ui textarea:focus { border-color: var(--primary); background: white; box-shadow: 0 8px 25px rgba(76,175,80,0.15); outline: none; }
+    .mobile-ui input[type="date"] { line-height: normal; display: flex; align-items: center; }
+    .mobile-ui .input-with-button-container {
+      display: flex;
+      align-items: center;
+      gap: 8px; /* Adjusted gap */
+     }
+    .mobile-ui .input-with-button-container input { flex-grow: 1; width: auto; min-width: 0; }
+    .mobile-ui .image-extract-btn {
+       background: #f8f9fa;
+       border: 3px solid #e0e0e0;
+       font-size: 1.8rem; /* Adjusted icon size */
+       color: var(--primary);
+       cursor: pointer;
+       padding: 30px 25px; /* Match input vertical padding */
+       display: flex; align-items: center; justify-content: center;
+       transition: all 0.2s ease;
+       border-radius: 26px; /* Match input */
+       flex-shrink: 0;
+       box-sizing: border-box;
+       line-height: 1;
+       /* Height will be determined by padding/font/border */
+    }
+    .mobile-ui .image-extract-btn:hover { border-color: var(--primary); background-color: white; }
+    .mobile-ui .image-extract-btn:disabled, .mobile-ui .image-extract-btn[aria-disabled="true"] { color: #ccc; cursor: not-allowed; background: #f8f9fa; border-color: #e0e0e0; opacity: 0.6; }
+    .mobile-ui .hidden-file-input { display: none; }
+    .mobile-ui .field-status {
+        font-size: var(--font-size-large-status);
+        color: var(--text-light);
+        margin-top: 15px;
+        min-height: 1.5em;
+        text-align: left;
+        padding-left: 4px;
+    }
+
+    .mobile-ui .help-icon {
+        display: inline-block; /* Keep it inline with label */
+        margin-left: 470px; /* Space after label text */
+        color: var(--text-light); /* Subtle color */
+        cursor: help; /* Indicate it's clickable for help */
+        font-size: 1.2em; /* Slightly smaller than label */
+        opacity: 0.7;
+        transition: opacity 0.2s ease;
+    }
+    .mobile-ui .help-icon:hover {
+        opacity: 1;
+        color: var(--primary-dark); /* Highlight on hover */
+    }
+    /* Position slightly higher */
+    .mobile-ui .help-icon i {
+       position: relative;
+       top: -1px; /* Adjust as needed */
+    }
+
+    /* --- Mobile Page Indicator --- */
+    .mobile-ui #mobile-page-indicator {
+      font-size: 2.5rem;
+      font-weight: 500;
+      color: #000000;
+      text-align: center;
+      padding: 10px 0;
+      background-color: rgba(255, 255, 255, 0.7); /* Semi-transparent background */
+      backdrop-filter: blur(3px); /* Optional blur effect */
+      border-bottom: 1px solid rgba(0,0,0,0.08);
+      flex-shrink: 0; /* Prevent shrinking */
+      order: 1; /* Ensure it appears after header */
+      width: 100%;
+      box-sizing: border-box;
+      position: relative; /* Ensure z-index works if needed */
+      z-index: 5; /* Below header if header has higher z-index */
+    }
+
+    .mobile-ui button {
+      width: 100%;
+      padding: 30px;
+      border: none;
+      border-radius: 30px;
+      font-size: var(--font-size-large-button);
+      font-weight: 600; letter-spacing: 0.5px; cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+      display: flex; align-items: center; justify-content: center;
+      gap: 22px;
+      font-family: 'Poppins', sans-serif;
+      box-sizing: border-box;
+      min-height: 95px;
+    }
+    .mobile-ui button i { font-size: 1.1em; }
+    .mobile-ui button:active { opacity: 0.9; transform: scale(0.98); }
+    .mobile-ui button[type="submit"] { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: white; margin-top: 25px; box-shadow: 0 8px 25px rgba(76,175,80,0.4); }
+    .mobile-ui #suggestBtn { background: linear-gradient(135deg, #6c5ce7, #4b44b6); color: white; box-shadow: 0 8px 25px rgba(108,92,231,0.4); margin-top: 35px; }
+    .mobile-ui .inventory-header { display: flex; flex-direction: column; align-items: flex-start; gap: 18px; width: 100%; margin-bottom: 25px; }
+    .mobile-ui .inventory-actions { width: 100%; display: flex; justify-content: flex-end; gap: 12px; }
+    .mobile-ui .bulk-action-btn { font-size: 1.5rem; padding: 15px 22px; gap: 12px; border-radius: 10px; border: none; cursor: pointer; transition: all 0.3s ease; display: inline-flex; align-items: center; justify-content: center; background: linear-gradient(135deg, var(--danger), var(--danger-dark)); color: white; }
+    .mobile-ui .delete-btn { /* Mobile individual delete */
+        width: 70px; height: 70px; padding: 8px; border-radius: 18px;
+        background: transparent; color: var(--danger); border: 3px solid var(--danger);
+        font-size: 1.8rem; line-height: 1; display: flex; align-items: center;
+        justify-content: center; flex-shrink: 0;
+    }
+    .mobile-ui .delete-btn:active { background: #ffebee; transform: scale(0.95); }
+    .mobile-ui #allItemsList, .mobile-ui #expiringList, .mobile-ui #expiredList { list-style: none; padding: 0; margin: 0; display: grid; gap: 20px; width: 100%; }
+    .mobile-ui .inventory-item, .mobile-ui .expiring-item, .mobile-ui .expired-item { padding: 30px; border-radius: 20px; display: flex; justify-content: space-between; align-items: center; gap: 20px; animation: fadeIn 0.4s ease; box-shadow: 0 8px 18px rgba(0,0,0,0.08); transition: all 0.3s ease; background: white; border-left: 8px solid #f0f0f0; position: relative; }
+    .mobile-ui .expiring-item-content, .mobile-ui .expired-item-content { font-size: 1.9rem; gap: 10px; display: flex; justify-content: space-between; width: 100%; line-height: 1.4; flex-wrap: wrap; }
+    .mobile-ui .item-info { font-size: var(--font-size-large-list-item); gap: 12px; display: flex; flex-direction: column; flex-grow: 1; }
+    .mobile-ui .item-name { font-weight: 600; font-size: 1.2em; color: var(--text); line-height: 1.3; }
+    .mobile-ui .item-details { font-size: var(--font-size-large-list-detail); gap: 18px 25px; display: flex; color: var(--text-light); flex-wrap: wrap; }
+    .mobile-ui .item-details span { gap: 10px; display: flex; align-items: center; }
+    .mobile-ui .item-details i { font-size: 1em; }
+    .mobile-ui .expiring-item { background: #fff9e6; border-left: 8px solid var(--warning); }
+    .mobile-ui .expired-item { background: #ffe6e6; border-left: 8px solid var(--danger); }
+    .mobile-ui #suggestions { background: white; padding: 35px; border-radius: 20px; margin-top: 35px; line-height: 1.8; border: 2px solid #f0f0f0; white-space: pre-wrap; font-size: var(--font-size-large-suggestions); min-height: 180px; width: 100%; box-sizing: border-box; }
+    .mobile-ui .loader { border: 7px solid #f3f3f3; border-top: 7px solid var(--primary); border-radius: 50%; width: 60px; height: 60px; animation: spin 1s linear infinite; margin: 45px auto; display: none; }
+    .mobile-ui .empty-state { padding: 50px 30px; font-size: var(--font-size-large-empty); gap: 25px; margin-top: 35px; text-align: center; color: var(--text-light); display: flex; flex-direction: column; align-items: center; width: 100%; }
+    .mobile-ui .empty-state span { font-size: 4.0rem; }
+    /* Hide desktop-only elements on mobile */
+    .mobile-ui .container { display: none !important; } /* Hide desktop grid */
+    /* --- END MOBILE-SPECIFIC STYLES --- */
+
+  </style>
+</head>
+<body>
+
+  <!-- Container where UI will be injected -->
+  <div id="app-root">
+    <!-- Loading indicator shown initially -->
+    <div id="loading-indicator">
+      <div class="loader"></div>
+      <p>Loading ZeroWasteChef...</p>
+    </div>
+  </div>
+
+  <!-- =========================================== -->
+  <!-- TEMPLATE for Desktop UI -->
+  <!-- =========================================== -->
+  <template id="desktop-template">
+    <!-- HTML structure from new.html<body> (excluding script) -->
+    <!-- Note: IDs and structure here may not match the old.html JS -->
+    <div class="container">
+      <div class="navbar"><div class="logo"><i class="fas fa-leaf logo-icon"></i>ZeroWasteChef</div><div class="nav-links"><a href="#" class="nav-link active" data-tab="home-tab">Home</a><a href="#" class="nav-link" data-tab="recipes-tab">Recipes</a><a href="#" class="nav-link" data-tab="inventory-tab">Inventory</a><a href="#" class="nav-link" data-tab="feedback-tab">Feedback</a><a href="#" class="nav-link" data-tab="Help-tab">Help</a></div></div>
+      <div class="header-card"><h1>ZeroWasteChef</h1><p>Smart food tracking to reduce waste and inspire your cooking</p></div>
+      <div class="tab-content active" id="home-tab">
+        <div class="grid-container">
+          <div class="inventory-section card"><h2><i class="fas fa-exclamation-circle" style="color: var(--warning); margin-right: 10px;"></i>Expiring Food Notifications</h2><div class="alert-section"><div class="alert-title"><i class="fas fa-exclamation-triangle"></i><span>Items Expiring Soon</span></div><ul class="alert-list" id="expiringFoodList"></ul><div class="empty-state" id="noExpiringFood" style="display: none;"><p>No items expiring soon. Great job!</p></div></div><div class="alert-section" style="background-color: #fef2f2; border-left-color: var(--danger);"><div class="alert-title" style="color: var(--danger);"><i class="fas fa-times-circle"></i><span>Expired Items</span></div><ul class="alert-list" id="expiredFoodList"></ul><div class="empty-state" id="noExpiredFood" style="display: none;"><p>No expired items. Keep up the good work!</p></div></div>
+          </div>
+          <div class="status-section"><div class="card statistic-card"><div class="statistic-icon"><i class="fas fa-exclamation-circle"></i></div><div class="statistic-value" id="expiringSoonCount">0</div><div class="statistic-label">Expiring Soon (&lt;4 days)</div></div><div class="card statistic-card"><div class="statistic-icon"><i class="fas fa-calendar-times"></i></div><div class="statistic-value" id="expiredCount">0</div><div class="statistic-label">Expired Items</div></div><div class="card statistic-card"><div class="statistic-icon"><i class="fas fa-clipboard-check"></i></div><div class="statistic-value" id="totalItemsCount">0</div><div class="statistic-label">Items Being Tracked</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="tab-content" id="recipes-tab">
+        <div class="grid-container">
+          <div class="recipe-generator card" style="grid-column: span 8;"><h2><i class="fas fa-robot" style="color: var(--primary); margin-right: 10px;"></i>AI Recipe Generator</h2><p>Get personalized recipe suggestions based on what's in your inventory, especially items that are about to expire.</p><div class="form-group"><label for="recipePreference">Dietary Preference (Optional)</label><div class="combo-input-container"><select id="dietaryPreference" class="combo-select" onchange="handleComboChange(this, 'custom-dietary')"><option value="" disabled selected>Select your dietary preference</option><option value="vegetarian">Vegetarian</option><option value="vegan">Vegan</option><option value="gluten-free">Gluten-Free</option><option value="low-carb">Low-Carb</option><option value="other">Other</option></select><input type="text" id="custom-dietary" class="combo-input" placeholder="Enter your custom dietary preference" style="display: none;"></div></div><div class="form-group"><label for="foodPreference">Food Preference (Optional)</label><div class="combo-input-container"><select id="foodPreference" class="combo-select" onchange="handleComboChange(this, 'custom-food')"><option value="" disabled selected>Select your food preference</option><option value="spicy">Likes spicy food</option><option value="no-mushrooms">Dislikes mushrooms</option><option value="no-sugar">Avoids sugar</option><option value="organic">Prefers organic produce</option><option value="other">Other</option></select><input type="text" id="custom-food" class="combo-input" placeholder="Enter your custom food preference" style="display: none;"></div></div><div class="form-group"><label for="cuisinePreference">Cuisine Preference (Optional)</label><div class="combo-input-container"><select id="cuisinePreference" class="combo-select" onchange="handleComboChange(this, 'custom-cuisine')"><option value="" disabled selected>Select your cuisine preference</option><option value="malay">Malay</option><option value="indian">Indian</option><option value="chinese">Chinese</option><option value="japanese">Japanese</option><option value="other">Other</option></select><input type="text" id="custom-cuisine" class="combo-input" placeholder="Enter your custom cuisine preference" style="display: none;"></div></div><button id="generateRecipeBtn" class="primary-btn"><i class="fas fa-magic"></i> Generate Recipe Ideas</button><div id="recipeLoading" style="display: none; text-align: center; margin-top: 20px;"><i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: var(--primary);"></i><p>Generating recipe ideas...</p></div><div id="aiRecipeSuggestion" class="ai-suggestion" style="display: none; margin-top: 20px;"></div><div id="generatedRecipesList" style="margin-top: 30px;"><h3>Generated Recipes</h3><div id="savedRecipes"><div class="empty-state" id="noSavedRecipes" style="display: block;"><div class="empty-icon"><i class="fas fa-utensils"></i></div><p>.</p></div><div class="recipe-actions"><button class="save-to-docs-btn" id="saveToDocBtn" style="width: 100%; height: 50px;"><i class="fas fa-file-download"></i> Save to Docs</button></div></div></div><div class="save-confirmation" style="display: none;"><i class="fas fa-check-circle" style="color: var(--primary);"></i><span>Recipe saved to your documents!</span></div>
+          </div>
+          <div class="card" style="grid-column: span 4;"><h2><i class="fas fa-history" style="color: #9b59b6; margin-right: 10px;"></i>Recipe History</h2><ul id="recipeHistoryList"></ul><div id="noRecipeHistory" class="empty-state"><span><i class="fas fa-book"></i></span><div>No saved recipes found.<br>Generated recipes will appear here!</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="tab-content" id="inventory-tab">
+        <div class="grid-container">
+          <div class="add-item-section card"><h2><i class="fas fa-utensils" style="color: var(--primary); margin-right: 10px;"></i>Add New Item</h2><form id="addItemForm"><div class="form-group"><label for="itemCategory"><i class="fas fa-tags"></i> Category</label><div class="combo-input-container"><select id="itemCategory" class="combo-select" onchange="handleComboChange(this, 'custom-category')"><option value="" disabled selected>Select a category</option><option value="fruits">Fruits</option><option value="vegetables">Vegetables</option><option value="dairy">Dairy & Eggs</option><option value="meat">Meat & Seafood</option><option value="grains">Grains & Bread</option><option value="herbs">Herbs & Spices</option><option value="frozen">Frozen Foods</option><option value="condiments">Condiments & Sauces</option><option value="other">Other</option></select><input type="text" id="custom-category" class="combo-input" placeholder="Enter your custom category" style="display: none;"></div></div><div class="form-group"><label for="itemName"><i class="fas fa-utensils"></i> Food Item</label><input type="text" id="itemName" required placeholder="e.g. Spinach, Yogurt, Chicken breast"></div><div class="form-group"><label for="quantity"><i class="fas fa-balance-scale"></i> Quantity</label><input type="text" id="quantity" required placeholder="e.g. 500g, 2 liters, 6 pieces"></div><div class="form-group"><label for="expiryDate"><i class="far fa-calendar-alt"></i> Expiry Date</label><input type="date" id="expiryDate" required></div><button type="submit" class="primary-btn"><i class="fas fa-save"></i> Save Item</button></form>
+          </div>
+          <div class="show-inventory-section card"><div class="inventory-header"><h2><i class="fas fa-warehouse" style="color: var(--primary); margin-right: 10px;"></i>Your Inventory</h2><button id="deleteAllBtn" class="secondary-btn" style="background: linear-gradient(135deg, var(--danger), var(--danger-dark));" onclick="confirmDeleteAll()"><i class="fas fa-trash"></i> Clear All</button></div><div class="tabs"><div class="tab active" data-content="all-items">All Items</div><div class="tab" data-content="expiring-soon">Expiring Soon</div><div class="tab" data-content="expired">Expired</div></div><div class="tab-content active" id="all-items"><ul class="inventory-list" id="allItemsList"></ul><div class="empty-state" id="noItems" style="display: none;"><div class="empty-icon"><i class="fas fa-box-open"></i></div><p>Your inventory is empty. Add items to start tracking!</p></div></div><div class="tab-content" id="expiring-soon"><ul class="inventory-list" id="expiringList"></ul><div class="empty-state" id="noExpiring" style="display: none;"><div class="empty-icon"><i class="fas fa-check-circle"></i></div><p>No items expiring soon. Great job!</p></div></div><div class="tab-content" id="expired"><ul class="inventory-list" id="expiredList"></ul><div class="empty-state" id="noExpired" style="display: none;"><div class="empty-icon"><i class="fas fa-check-circle"></i></div><p>No expired items. Keep up the good work!</p></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="tab-content" id="feedback-tab">
+        <div class="feedback-container">
+          <div class="card"><h2><i class="fas fa-comment-alt" style="color: var(--primary); margin-right: 10px;"></i>Share Your Feedback</h2><p>Help us improve ZeroWasteChef by sharing your experience and suggestions.</p><form id="feedbackForm"><div class="form-group"><label>How would you rate your experience?</label><div class="star-rating"><input type="radio" id="star5" name="rating" value="5" /><label for="star5"><i class="fas fa-star"></i></label><input type="radio" id="star4" name="rating" value="4" /><label for="star4"><i class="fas fa-star"></i></label><input type="radio" id="star3" name="rating" value="3" /><label for="star3"><i class="fas fa-star"></i></label><input type="radio" id="star2" name="rating" value="2" /><label for="star2"><i class="fas fa-star"></i></label><input type="radio" id="star1" name="rating" value="1" /><label for="star1"><i class="fas fa-star"></i></label></div></div><div class="form-group"><label for="feedbackCategory">What aspect are you providing feedback on?</label><select id="feedbackCategory" required><option value="" disabled selected>Select an option</option><option value="inventory">Inventory Management</option><option value="recipes">Recipe Suggestions</option><option value="ui">User Interface</option><option value="feature">Feature Request</option><option value="bug">Bug Report</option><option value="other">Other</option></select></div><div class="form-group"><label for="feedbackMessage">Your Feedback</label><textarea id="feedbackMessage" rows="5" required placeholder="Share your thoughts, suggestions, or report issues..."></textarea></div><div class="form-group"><label for="emailAddress">Email Address (Optional)</label><input type="email" id="emailAddress" placeholder="For follow-up if needed"></div><button type="submit" class="primary-btn"><i class="fas fa-paper-plane"></i> Submit Feedback</button></form>
+          </div>
+          <div class="card"><h2><i class="fas fa-lightbulb" style="color: var(--primary); margin-right: 10px;"></i>Feature Roadmap</h2><p>Here's what we're working on next based on community feedback:</p><ul style="list-style-type: none; padding: 0;"><li style="padding: 12px 0; border-bottom: 1px solid #e2e8f0;"><div style="display: flex; align-items: center; gap: 12px;"><div style="background: rgba(46, 125, 50, 0.1); color: var(--primary); width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center;"><i class="fas fa-mobile-alt"></i></div><div><h3 style="margin: 0; font-size: 1.1rem;">Mobile App</h3><p style="margin: 4px 0 0 0; color: var(--text-light); font-size: 0.9rem;">Track your inventory on the go with barcode scanning.</p></div></div></li><li style="padding: 12px 0; border-bottom: 1px solid #e2e8f0;"><div style="display: flex; align-items: center; gap: 12px;"><div style="background: rgba(46, 125, 50, 0.1); color: var(--primary); width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center;"><i class="fas fa-chart-line"></i></div><div><h3 style="margin: 0; font-size: 1.1rem;">Waste Analytics</h3><p style="margin: 4px 0 0 0; color: var(--text-light); font-size: 0.9rem;">Track your food waste reduction progress over time.</p></div></div></li><li style="padding: 12px 0;"><div style="display: flex; align-items: center; gap: 12px;"><div style="background: rgba(46, 125, 50, 0.1); color: var(--primary); width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center;"><i class="fas fa-users"></i></div><div><h3 style="margin: 0; font-size: 1.1rem;">Community Recipe Sharing</h3><p style="margin: 4px 0 0 0; color: var(--text-light); font-size: 0.9rem;">Share and discover community-created zero waste recipes.</p></div></div></li></ul>
+          </div>
+        </div>
+      </div>
+      <div class="tab-content" id="Help-tab">
+        <div class="flex-container">
+          <div style="grid-column: span 9;">
+            <div class="card" id="getting-started"><h2><i class="fas fa-rocket" style="color: var(--primary); margin-right: 10px;"></i>Getting Started</h2><p>Welcome to ZeroWasteChef! This section will guide you getting started with the application.</p><h3 id="navigation-section">Navigating the Interface</h3><p>The ZeroWasteChef interface is divided into four main sections, accessible from the top navigation bar:</p><div class="feature-card"><div class="feature-icon"><i class="fas fa-home"></i></div><div class="feature-content"><h4 class="feature-title">Home</h4><p>Your dashboard showing expiring food notifications and key statistics about your inventory.</p></div></div><div class="feature-card"><div class="feature-icon"><i class="fas fa-utensils"></i></div><div class="feature-content"><h4 class="feature-title">Recipes</h4><p>Get AI-powered recipe suggestions based on your inventory and saved recipes.</p></div></div><div class="feature-card"><div class="feature-icon"><i class="fas fa-warehouse"></i></div><div class="feature-content"><h4 class="feature-title">Inventory</h4><p>Add, manage, and track your food items, their quantities, and expiration dates.</p></div></div><div class="feature-card"><div class="feature-icon"><i class="fas fa-comment-alt"></i></div><div class="feature-content"><h4 class="feature-title">Feedback</h4><p>Share your experience and suggestions to help us improve.</p></div></div>
+            </div>
+            <div class="card" id="features"><h2><i class="fas fa-star" style="color: var(--primary); margin-right: 10px;"></i>Features</h2><h3 id="inventory-management">Inventory Management</h3><p>Keep track of all food items in your kitchen with our smart inventory system.</p><h4>How to Add Items:</h4><ol><li>Navigate to the <strong>Inventory</strong> tab</li><li>Fill in the item details:<ul><li>Category (Fruits, Vegetables, Dairy, etc.)</li><li>Food item name</li><li>Quantity</li><li>Expiry date</li></ul></li><li>Click "Save Item" to add to your inventory</li></ol><div class="tip-box"><div class="tip-title"><i class="fas fa-lightbulb"></i> Pro Tip</div><p>Use the custom category option when your food item doesn't fit into the predefined categories.</p></div><h4>Managing Your Inventory:</h4><ul><li>View all items in one place</li><li>Filter by "All Items," "Expiring Soon," or "Expired"</li><li>Delete individual items when used</li><li>Clear all items if needed</li></ul><h3 id="recipe-generator">AI Recipe Generator</h3><p>Our intelligent recipe system suggests meals based on what's in your inventory, prioritizing items that are about to expire.</p><h4>Generating Recipe Ideas:</h4><ol><li>Go to the <strong>Recipes</strong> tab</li><li>Select your preferences:<ul><li>Dietary preference (Vegetarian, Vegan, etc.)</li><li>Food preference (Spicy, No mushrooms, etc.)</li><li>Cuisine preference (Malay, Indian, Chinese, etc.)</li></ul></li><li>Click "Generate Recipe Ideas"</li><li>Review the AI-generated suggestions</li><li>Save recipes you like for future reference</li></ol><h3 id="expiry-tracking">Expiry Tracking System</h3><p>Never waste food due to missed expiration dates again!</p><h4>Key Features:</h4><ul><li><strong>Expiring Soon Notifications</strong> - Items that will expire within 4 days</li><li><strong>Expired Items List</strong> - Items that have passed their expiration date</li><li><strong>Dashboard Statistics</strong> - Quick view of expiring soon count, expired count, and total items</li></ul><h3 id="feedback-system">Feedback System</h3><p>Help us improve by sharing your experience and suggestions.</p><h4>How to Provide Feedback:</h4><ol><li>Go to the <strong>Feedback</strong> tab</li><li>Rate your experience (1-5 stars)</li><li>Select a feedback category</li><li>Write your feedback message</li><li>Optionally provide your email for follow-up</li><li>Submit your feedback</li></ol>
+            </div>
+            <div class="card" id="faq"><h2><i class="fas fa-question-circle" style="color: var(--primary); margin-right: 10px;"></i>Frequently Asked Questions</h2><h3>General Questions</h3><h4>Q: Is my data secure?</h4><p>A: Yes, we take data security seriously. Your inventory data is stored securely.</p><h4>Q: How do I update an item's expiry date?</h4><p>A: Currently, you'll need to delete the item and add it again with the updated expiry date. We're working on an edit feature.</p><h4>Q: How does the AI recipe generation work?</h4><p>A: Our AI analyzes your inventory items, prioritizes ingredients that are expiring soon, and considers your dietary and cuisine preferences to suggest recipes that minimize waste.</p>
+            </div>
+            <div class="card" id="tips"><h2><i class="fas fa-lightbulb" style="color: var(--primary); margin-right: 10px;"></i>Tips & Tricks</h2><h3>Getting the Most Out of ZeroWasteChef</h3><div class="feature-card"><div class="feature-icon"><i class="fas fa-calendar-check"></i></div><div class="feature-content"><h4 class="feature-title">Regular Updates</h4><p>Update your inventory at least once a week to ensure the AI has accurate information for recipe suggestions.</p></div></div><div class="feature-card"><div class="feature-icon"><i class="fas fa-tags"></i></div><div class="feature-content"><h4 class="feature-title">Use Specific Categories</h4><p>Categorize your food items accurately for better organization and recipe recommendations.</p></div></div><div class="feature-card"><div class="feature-icon"><i class="fas fa-magic"></i></div><div class="feature-content"><h4 class="feature-title">Experiment with Preferences</h4><p>Try different dietary and cuisine preferences in the recipe generator to discover new meal ideas.</p></div></div><div class="feature-card"><div class="feature-icon"><i class="fas fa-list-ol"></i></div><div class="feature-content"><h4 class="feature-title">Prioritize Expiring Items</h4><p>Check the "Expiring Soon" tab daily to plan meals around ingredients that need to be used quickly.</p></div></div>
+            </div>
+            <div class="card" id="support"><h2><i class="fas fa-headset" style="color: var(--primary); margin-right: 10px;"></i>Support</h2><h3>Need Help?</h3><p>If you're experiencing any issues or have questions not covered in this guide, our support team is here to help.</p><div class="feature-card"><div class="feature-icon"><i class="fas fa-envelope"></i></div><div class="feature-content"><h4 class="feature-title">Email Support</h4><p>Contact us at <a href="mailto:support@zerowastechef.com">support@zerowastechef.com</a></p></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <!-- =========================================== -->
+  <!-- TEMPLATE for Mobile UI -->
+  <!-- =========================================== -->
+  <template id="mobile-template">
+    <div class="app-container">
+      <div class="header-card">
+        <h1>ZeroWasteChef</h1><p>Smart Food Management System</p>
+      </div>
+      <!-- *** Page Indicator Placeholder *** -->
+      <div id="mobile-page-indicator">1 / 5</div>
+      <!-- *** End Indicator *** -->
+      <div class="mobile-swiper-container">
+        <!-- Slide 1: Add New Item -->
+        <div class="swiper-slide" id="slide-add">
+          <div class="card">
+            <h2><i class="fas fa-plus-circle" style="color: var(--primary); margin-right: 12px;"></i>Add New Item</h2>
+            <!-- *** Form with Help Icons *** -->
+            <form id="itemForm">
+              <div class="form-group">
+                <label for="itemName">
+                  <i class="fas fa-utensils"></i> Food Item
+                  <!-- Help Icon -->
+                  <span class="help-icon" data-help="Take a picture of the food item or its packaging (e.g., an apple, a milk carton). The AI will try to identify the name.">
+                      <i class="far fa-question-circle"></i>
+                  </span>
+                </label>
+                <div class="input-with-button-container">
+                  <input type="text" id="itemName" required placeholder="e.g. Apples, Milk">
+                  <input type="file" id="imageItemInput" class="hidden-file-input" accept="image/*">
+                  <label for="imageItemInput" class="image-extract-btn" id="itemNameCameraBtnLabel" title="Identify item name from image"><i class="fas fa-camera"></i></label>
+                </div>
+                <div class="field-status" id="itemNameStatus"></div>
+              </div>
+
+              <div class="form-group">
+                <label for="quantity">
+                  <i class="fas fa-balance-scale"></i> Quantity 
+                  <!-- Help Icon -->
+                  <span class="help-icon" data-help="Take a picture focusing on the quantity, weight, or volume marking on the packaging (e.g., '1 litre', '500g', '6 slices').">
+                      <i class="far fa-question-circle"></i>
+                  </span>
+                </label>
+                <div class="input-with-button-container">
+                  <input type="text" id="quantity" required placeholder="e.g. 1 litre, 3 slices">
+                  <input type="file" id="quantityImageInput" class="hidden-file-input" accept="image/*">
+                  <label for="quantityImageInput" class="image-extract-btn" id="quantityCameraBtnLabel" title="Extract quantity from image"><i class="fas fa-ruler-combined"></i></label>
+                </div>
+                <div class="field-status" id="quantityStatus"></div>
+              </div>
+
+              <div class="form-group">
+                <label for="expiryDate">
+                  <i class="far fa-calendar-alt"></i> Expiry Date
+                  <!-- Help Icon -->
+                  <span class="help-icon" data-help="Take a picture focusing clearly on the expiry date (e.g., 'EXP 25/12/2024', 'Use By 31 OCT 25'). The AI will try to read it.">
+                      <i class="far fa-question-circle"></i>
+                  </span>
+                </label>
+                <div class="input-with-button-container">
+                  <input type="date" id="expiryDate" required>
+                  <input type="file" id="expiryImageInput" class="hidden-file-input" accept="image/*">
+                  <label for="expiryImageInput" class="image-extract-btn" id="expiryCameraBtnLabel" title="Extract expiry date from image"><i class="fas fa-calendar-check"></i></label>
+                </div>
+                <div class="field-status" id="expiryStatus"></div>
+              </div>
+
+              <button type="submit"><i class="fas fa-save"></i> Save Item</button>
+            </form>
+            <!-- *** End Form *** -->
+          </div>
+        </div>
+        <!-- Slide 2: AI Recipes -->
+        <div class="swiper-slide" id="slide-ai">
+          <div class="card">
+            <h2><i class="fas fa-robot" style="color: #6c5ce7; margin-right: 12px;"></i>AI Recipes</h2>
+            <div class="form-group"><label for="userPreference"><i class="fas fa-pencil-alt"></i> Recipe Preference (Optional)</label><input type="text" id="userPreference" placeholder="e.g. Italian, quick vegan"></div>
+            <button id="suggestBtn"><i class="fas fa-magic"></i> Generate Recipes</button>
+            <div class="loader" id="loader"></div><div id="suggestions" style="white-space: pre-wrap;">Your personalized recipes will appear here...</div>
+             <!-- Mobile Save Button -->
+             <button id="saveToDocBtn" disabled style="margin-top: 25px; background: #6c5ce7; cursor: not-allowed;">
+                <i class="fas fa-file-alt"></i> Save to Docs
+            </button>
+            <div id="saveStatus" style="text-align: center; margin-top: 15px; color: var(--text-light); font-size: var(--font-size-large-status); min-height: 1.5em;"></div>
+          </div>
+        </div>
+        <!-- Slide 3: Expiring Soon -->
+        <div class="swiper-slide" id="slide-expiring">
+          <div class="card">
+            <h2><i class="fas fa-clock" style="color: var(--warning); margin-right: 12px;"></i>Expiring Soon (<4 days)</h2>
+            <ul id="expiringList"></ul><div id="noExpiring" class="empty-state" style="display: none;"><span>🎉</span><div>All items are fresh!</div></div>
+          </div>
+        </div>
+        <!-- Slide 4: Expired Items -->
+        <div class="swiper-slide" id="slide-expired">
+          <div class="card">
+            <h2><i class="fas fa-exclamation-triangle" style="color: var(--danger); margin-right: 12px;"></i>Expired Items</h2>
+            <ul id="expiredList"></ul><div id="noExpired" class="empty-state" style="display: none;"><span>✅</span><div>No expired items!</div></div>
+          </div>
+        </div>
+        <!-- Slide 5: All Inventory -->
+        <div class="swiper-slide" id="slide-inventory">
+          <div class="card">
+            <div class="inventory-header"><h2><i class="fas fa-box-open" style="color: var(--primary-dark); margin-right: 12px;"></i>All Inventory Items</h2><div class="inventory-actions"><button class="bulk-action-btn delete-all-btn" id="deleteAllBtn"><i class="fas fa-trash"></i> Delete All</button></div></div>
+            <ul id="allItemsList"></ul><div id="noItems" class="empty-state" style="display: none;"><span>🏁</span><div>Your inventory is empty.<br>Add some items to get started!</div></div>
+          </div>
+        </div>
+      </div> <!-- End mobile-swiper-container -->
+    </div> <!-- End app-container -->
+  </template>
+
+
+  <!-- =========================================== -->
+  <!-- SCRIPT Block -->
+  <!-- =========================================== -->
+  <script>
+    function initializeUI() {
+      const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+      const appRoot = document.getElementById('app-root');
+      let uiType = 'desktop'; // Default
+
+      // More robust detection
+      if (/android|iphone|ipad|ipod|webos|blackberry|iemobile|opera mini/i.test(userAgent.toLowerCase()) || (navigator.maxTouchPoints && navigator.maxTouchPoints > 1) ) { // Check for touch capability too
+        uiType = 'mobile';
+      }
+      console.log("Detected UI Type:", uiType);
+
+      // --- Get the Correct HTML Template ---
+      let templateElement;
+      if (uiType === 'mobile') {
+        templateElement = document.getElementById('mobile-template');
+        document.body.classList.add('mobile-ui'); // Scope styles
+      } else {
+        templateElement = document.getElementById('desktop-template');
+        document.body.classList.add('desktop-ui');
+      }
+
+      // --- Inject HTML ---
+      if (templateElement && appRoot) {
+        const content = templateElement.content.cloneNode(true);
+        appRoot.innerHTML = ''; // Clear loading
+        appRoot.appendChild(content);
+
+        // --- Initialize LOGIC and EVENT LISTENERS *AFTER* injecting HTML ---
+        initializeAppLogic(uiType);
+
+      } else {
+        console.error("Could not find template or root element.");
+        appRoot.innerHTML = "<p style='color:red; text-align: center; padding: 40px;'>Error: Could not load UI components. Please try refreshing.</p>";
+      }
+    }
+
+    // --- Main App Logic and Event Listeners ---
+    function initializeAppLogic(uiType) {
+      console.log(`START initializeAppLogic for ${uiType}`);
+
+      // --- COMMON Element References (Assume IDs are consistent across templates where applicable) ---
+      // Note: Many of these IDs from old.html's original template may not match the new.html structure injected into the desktop template.
+      const itemForm = document.getElementById('itemForm') || document.getElementById('addItemForm'); // Try both IDs
+      const allItemsList = document.getElementById('allItemsList');
+      const noItems = document.getElementById('noItems');
+      const expiringList = document.getElementById('expiringList');
+      const noExpiring = document.getElementById('noExpiring');
+      const expiredList = document.getElementById('expiredList');
+      const noExpired = document.getElementById('noExpired');
+      const suggestBtn = document.getElementById('suggestBtn') || document.getElementById('generateRecipeBtn'); // Try both IDs
+      const loader = document.getElementById('loader') || document.getElementById('recipeLoading'); // Try both IDs
+      const suggestionsOutput = document.getElementById('suggestions') || document.getElementById('aiRecipeSuggestion'); // Try both IDs
+      const userPreferenceInput = document.getElementById('userPreference'); // Old ID
+      const itemNameInput = document.getElementById('itemName');
+      const quantityInput = document.getElementById('quantity');
+      const expiryDateInput = document.getElementById('expiryDate');
+      const deleteAllBtn = document.getElementById('deleteAllBtn');
+      const saveToDocBtn = document.getElementById('saveToDocBtn'); // This ID exists in new.html template
+      const saveStatus = document.getElementById('saveStatus');
+      console.log(`initializeAppLogic: suggestBtn element found? ${!!suggestBtn}`); // Added log
+      if (!suggestBtn) {
+          console.error("Generate/Suggest Recipe Button element was not found!"); // Added more specific error
+      }
+
+      // New IDs introduced by new.html template structure (used only on desktop now)
+      const dietaryPreferenceSelect = document.getElementById('dietaryPreference');
+      const customDietaryInput = document.getElementById('custom-dietary');
+      const foodPreferenceSelect = document.getElementById('foodPreference');
+      const customFoodInput = document.getElementById('custom-food');
+      const cuisinePreferenceSelect = document.getElementById('cuisinePreference');
+      const customCuisineInput = document.getElementById('custom-cuisine');
+
+      // --- MOBILE-SPECIFIC References & Listener Attachments ---
+      let imageItemInput, itemNameCameraBtnLabel, itemNameStatus;
+      let quantityImageInput, quantityCameraBtnLabel, quantityStatus;
+      let expiryImageInput, expiryCameraBtnLabel, expiryStatus;
+      let mobileSwiperContainer, pageIndicator, totalSlides;
+
+      if (uiType === 'mobile') {
+        console.log("Setting up MOBILE specific elements and listeners...");
+        imageItemInput = document.getElementById('imageItemInput');
+        itemNameCameraBtnLabel = document.getElementById('itemNameCameraBtnLabel');
+        itemNameStatus = document.getElementById('itemNameStatus');
+        quantityImageInput = document.getElementById('quantityImageInput');
+        quantityCameraBtnLabel = document.getElementById('quantityCameraBtnLabel');
+        quantityStatus = document.getElementById('quantityStatus');
+        expiryImageInput = document.getElementById('expiryImageInput');
+        expiryCameraBtnLabel = document.getElementById('expiryCameraBtnLabel');
+        expiryStatus = document.getElementById('expiryStatus');
+        mobileSwiperContainer = document.querySelector('.mobile-swiper-container'); // Use querySelector for class
+        pageIndicator = document.getElementById('mobile-page-indicator');
+        const slides = mobileSwiperContainer ? mobileSwiperContainer.querySelectorAll('.swiper-slide') : [];
+        totalSlides = slides.length;
+
+        const helpIcons = document.querySelectorAll('.help-icon'); // Get all help icons
+        if (helpIcons) {
+            helpIcons.forEach(icon => {
+                icon.addEventListener('click', (event) => {
+                     // Prevent potential label click issues
+                    event.preventDefault();
+                    event.stopPropagation();
+                    // Get help text from data attribute
+                    const helpText = icon.getAttribute('data-help');
+                    if (helpText) {
+                        alert(helpText); // Show help text in a simple alert
+                    }
+                });
+            });
+            console.log(`Attached listeners to ${helpIcons.length} help icons.`);
+        } else {
+            console.warn("Could not find any help icons to attach listeners to.");
+        }
+
+        if (imageItemInput) imageItemInput.addEventListener('change', handleImageFileSelect); else console.error("Mobile imageItemInput not found");
+        if (quantityImageInput) quantityImageInput.addEventListener('change', handleQuantityImageSelect); else console.error("Mobile quantityImageInput not found");
+        if (expiryImageInput) expiryImageInput.addEventListener('change', handleExpiryImageSelect); else console.error("Mobile expiryImageInput not found");
+        if (mobileSwiperContainer && pageIndicator && totalSlides > 0) {
+           let scrollTimeout;
+           mobileSwiperContainer.addEventListener('scroll', () => {
+              clearTimeout(scrollTimeout);
+              scrollTimeout = setTimeout(updatePageIndicator, 50); // Debounce
+           });
+           updatePageIndicator(); // Initial update
+        } else {
+           console.error("Could not setup page indicator - container, indicator, or slides not found.");
+           if(pageIndicator) pageIndicator.style.display = 'none'; // Hide if setup fails
+        }
+        console.log("Mobile listeners attached.");
+      } else {
+        console.log("Setting up DESKTOP specific listeners (if any)...");
+        // Add any desktop-only listener attachments here from new.html JS
+        const navLinks = document.querySelectorAll('.desktop-ui .nav-link');
+        const tabContents = document.querySelectorAll('.desktop-ui .tab-content');
+        const tabs = document.querySelectorAll('.desktop-ui .tabs .tab');
+
+        navLinks.forEach(link => {
+          link.addEventListener('click', function(e) {
+            e.preventDefault();
+            navLinks.forEach(navLink => navLink.classList.remove('active'));
+            this.classList.add('active');
+            tabContents.forEach(content => content.classList.remove('active'));
+            const tabId = this.getAttribute('data-tab');
+            document.getElementById(tabId).classList.add('active');
+            // If navigating to Inventory, activate the default tab within it
+            if (tabId === 'inventory-tab') {
+                 const defaultInventoryTab = document.querySelector('#inventory-tab .tabs .tab.active');
+                 if (defaultInventoryTab) {
+                     const defaultContentId = defaultInventoryTab.getAttribute('data-content');
+                     const defaultContent = document.getElementById(defaultContentId);
+                     if (defaultContent) {
+                          document.querySelectorAll('#inventory-tab .tab-content').forEach(content => content.classList.remove('active'));
+                          defaultContent.classList.add('active');
+                     }
+                 }
+            }
+             if (tabId === 'recipes-tab') {
+                 loadRecipeHistory(); // Load history when Recipes tab is clicked
+             }
+          });
+        });
+
+         tabs.forEach(tab => {
+            tab.addEventListener('click', function() {
+              const tabContainer = this.closest('.tabs');
+              tabContainer.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+              this.classList.add('active');
+              const contentId = this.getAttribute('data-content');
+              const parentContainer = tabContainer.parentElement; // Assuming tab contents are sibling to tabs div
+              parentContainer.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+              parentContainer.querySelector(`#${contentId}`).classList.add('active');
+            });
+          });
+
+        // Add listeners for new.html combo boxes if they exist
+         if (dietaryPreferenceSelect) dietaryPreferenceSelect.onchange = function() { handleComboChange(this, 'custom-dietary'); };
+         if (foodPreferenceSelect) foodPreferenceSelect.onchange = function() { handleComboChange(this, 'custom-food'); };
+         if (cuisinePreferenceSelect) cuisinePreferenceSelect.onchange = function() { handleComboChange(this, 'custom-cuisine'); };
+
+      }
+
+      // --- Attach Common Event Listeners ---
+      if (itemForm) itemForm.addEventListener('submit', handleItemSubmit); else console.error("itemForm not found");
+      if (suggestBtn) suggestBtn.addEventListener('click', getSuggestions); else console.error("suggestBtn not found");
+      if (deleteAllBtn) deleteAllBtn.addEventListener('click', confirmDeleteAll); // May only exist on desktop template now
+      if (saveToDocBtn) saveToDocBtn.addEventListener('click', handleSaveToDoc); // Add listener
+
+      // --- Handler function for saving to Docs ---
+        function handleSaveToDoc() {
+        // Get the currently displayed recipe object
+        // Check if recipesGlobal exists and if the current index is valid
+        if (!recipesGlobal || recipesGlobal.length === 0 || currentRecipeIndex < 0 || currentRecipeIndex >= recipesGlobal.length) {
+             // Check for the save confirmation element (new template structure)
+             const saveConfirmation = document.querySelector('.desktop-ui .save-confirmation');
+             if (saveConfirmation) {
+                 saveConfirmation.innerHTML = `<i class="fas fa-info-circle" style="color: var(--danger);"></i> <span>No recipe generated yet to save.</span>`;
+                 saveConfirmation.style.display = 'flex'; // Show it
+                 setTimeout(() => { saveConfirmation.style.display = 'none'; }, 3000);
+             } else if (saveStatus) { // Fallback to old status element if new one not found
+                saveStatus.textContent = "No recipe generated yet to save.";
+                saveStatus.style.color = 'var(--danger)';
+                setTimeout(() => { saveStatus.textContent = ''; }, 3000);
+             } else {
+                alert("No recipe generated yet to save.");
+             }
+             console.warn("SaveToDoc: No recipe generated or selected.");
+             return; // Exit if no valid recipe exists
+        }
+
+        const currentRecipe = recipesGlobal[currentRecipeIndex];
+        const recipeTitle = currentRecipe.title || 'Untitled Recipe'; // Use a fallback title
+
+        // Disable buttons
+        if (saveToDocBtn) saveToDocBtn.disabled = true;
+        // Only disable suggest button on desktop where it's visually separate from save
+        if (uiType === 'desktop' && suggestBtn) suggestBtn.disabled = true;
+
+
+        // Display saving message
+        const saveConfirmation = document.querySelector('.desktop-ui .save-confirmation');
+        const savingMessage = `Saving "${recipeTitle}" to Google Docs...`;
+
+        if (saveConfirmation) {
+            saveConfirmation.innerHTML = `<i class="fas fa-spinner fa-spin" style="color: var(--text-light);"></i> <span>${savingMessage}</span>`;
+            saveConfirmation.style.display = 'flex'; // Show it
+        } else if (saveStatus) { // Fallback
+           saveStatus.textContent = savingMessage;
+           saveStatus.style.color = 'var(--text-light)';
+        } else {
+           console.log(savingMessage); // Log if no status area
+           // Could use an alert here, but it's disruptive
+        }
+
+        console.log(`Calling GAS: saveRecipeToDoc with recipe object for "${recipeTitle}"`);
+        // Call the backend, passing the current recipe object
+        google.script.run
+          .withSuccessHandler((result) => { // Backend can optionally return the Doc URL or a success message
+            console.log("Save success. Backend response:", result);
+            const successMessage = `Recipe "${recipeTitle}" saved!`; // Use recipe title in message
+
+            // Display success message
+            if (saveConfirmation) {
+                // If backend returned a URL, maybe make the message a link
+                if (result && typeof result === 'string' && result.startsWith('http')) {
+                     saveConfirmation.innerHTML = `<i class="fas fa-check-circle" style="color: var(--primary);"></i> <span>Recipe saved! <a href="${result}" target="_blank" style="color: inherit; text-decoration: underline;">View Doc</a></span>`;
+                } else {
+                     saveConfirmation.innerHTML = `<i class="fas fa-check-circle" style="color: var(--primary);"></i> <span>${successMessage}</span>`;
+                }
+                // It's already displayed
+            } else if (saveStatus) { // Fallback
+              saveStatus.textContent = successMessage + (result && typeof result === 'string' && result.startsWith('http') ? ` (Doc link: ${result})` : '');
+              saveStatus.style.color = 'var(--primary)';
+            } else {
+               alert(successMessage + (result && typeof result === 'string' && result.startsWith('http') ? `\nDoc link: ${result}` : ''));
+            }
+
+            // Re-enable buttons after a short delay
+            setTimeout(() => {
+              // Re-enable save button if there are still recipes to save
+              // (This check might be slightly redundant as it's re-enabled below anyway, but keeps the logic clear)
+              if (recipesGlobal && recipesGlobal.length > 0) {
+                 if (saveToDocBtn) saveToDocBtn.disabled = false;
+              } else {
+                 if (saveToDocBtn) saveToDocBtn.disabled = true; // Disable if no recipes remain
+              }
+              // Always re-enable generate button
+              if (suggestBtn) suggestBtn.disabled = false;
+
+               // Hide confirmation after success message
+               if (saveConfirmation) {
+                   setTimeout(() => { saveConfirmation.style.display = 'none'; }, 4000); // Keep success message a bit longer
+               }
+               // Clear old status element if used
+                if (saveStatus) {
+                   setTimeout(() => { saveStatus.textContent = ''; }, 4000);
+               }
+
+
+               // Important: Reload recipe history on desktop after saving a recipe
+               if (uiType === 'desktop') {
+                   loadRecipeHistory();
+               }
+
+            }, 500); // Short delay before re-enabling buttons
+
+          })
+          .withFailureHandler((err) => {
+            console.error("Save Error:", err);
+            const errorMessage = "Error saving recipe: " + (err.message || "Unknown error");
+
+            // Display error message
+            if (saveConfirmation) {
+               saveConfirmation.innerHTML = `<i class="fas fa-exclamation-circle" style="color: var(--danger);"></i> <span>${errorMessage}</span>`;
+            } else if (saveStatus) { // Fallback
+               saveStatus.textContent = errorMessage;
+               saveStatus.style.color = 'var(--danger)';
+            } else {
+               alert(errorMessage);
+            }
+
+
+            // Re-enable buttons on failure
+            if (saveToDocBtn) saveToDocBtn.disabled = false; // Allow retry potentially
+            if (suggestBtn) suggestBtn.disabled = false;
+
+            // Hide confirmation after error message (if shown)
+             if (saveConfirmation) {
+                 setTimeout(() => { saveConfirmation.style.display = 'none'; }, 5000); // Longer delay for error
+             }
+             // Clear old status element if used
+             if (saveStatus) {
+                 setTimeout(() => { saveStatus.textContent = ''; }, 5000);
+             }
+
+          })
+          // Send the full recipe object to the backend
+          .saveRecipeToDoc(currentRecipe);
+       }
+
+
+      // --- Core App Functions ---
+      function initializeApp() {
+        console.log("Running initializeApp (loading data)...");
+        google.script.run
+          .withSuccessHandler(preference => {
+             // The new template structure uses specific preference inputs,
+             // the old `userPreference` input might not exist or might map differently.
+             // If you intend to use the new preference inputs, you'll need to update
+             // the `getSuggestions` function to read from those instead of `userPreferenceInput`.
+             // For now, keep the old logic but acknowledge the potential mismatch.
+
+             // Load inventory data for all relevant lists
+             loadAllItems(); // Populates #allItemsList
+             loadExpiringItems(); // Populates #expiringList and #expiredList
+
+             // On desktop, also populate home tab lists and stats
+             if (uiType === 'desktop') {
+                 checkExpiringItemsForHomeTab(); // Populates #expiringFoodList, #expiredFoodList, stats counts
+                 loadRecipeHistory(); // Populates #recipeHistoryList
+             }
+
+             // Clear any mobile-specific statuses if needed after load
+             if (uiType === 'mobile') {
+               clearAllStatuses();
+             }
+          })
+          .withFailureHandler(err => {
+             console.error("GAS Init Error:", err);
+             alert("Error initializing app data. Please refresh. Details: " + (err.message || JSON.stringify(err)));
+             if (uiType === 'mobile') {
+               clearAllStatuses();
+             }
+          })
+          .initializeUserData(); // Backend function - Assumes this function still exists and works
+      }
+
+      function handleItemSubmit(e) {
+        e.preventDefault();
+        if (!itemNameInput || !quantityInput || !expiryDateInput) {
+             console.error("Add item form elements not found.");
+             alert("UI Error: Cannot find form elements.");
+             return;
+        }
+
+        const name = itemNameInput.value.trim();
+        const quantityValue = quantityInput.value.trim();
+        const expiryDateValue = expiryDateInput.value; // Assuming date input gives YYYY-MM-DD
+
+        // New: Get Category from new.html structure
+        let category = '';
+        if (uiType === 'desktop' && dietaryPreferenceSelect) { // Re-using dietary preference IDs for category logic example
+             category = getComboValue('itemCategory', 'custom-category'); // Use the new combo box function
+        } else if (uiType !== 'desktop') {
+            // Mobile doesn't have category in the template HTML provided,
+            // or handle it differently if it was intended.
+            // For now, add item without category on mobile if the field isn't there.
+        }
+
+        if (!name || !quantityValue || !expiryDateValue) { alert('Please fill in all required item details (Item Name, Quantity, Expiry Date).'); return; }
+
+        // Disable appropriately
+        const submitButton = itemForm.querySelector('button[type="submit"]');
+        if (submitButton) submitButton.disabled = true;
+        if (uiType === 'mobile') setFormEnabled(false); // Disables all inc image buttons
+
+        console.log(`Calling GAS: addItem with name=${name}, quantity=${quantityValue}, expiryDate=${expiryDateValue}, category=${category}`);
+
+        google.script.run
+          .withSuccessHandler(() => {
+            if (uiType === 'mobile') { setFieldStatus(itemNameStatus, 'Item saved!', false); setTimeout(clearAllStatuses, 2500); }
+            else { /* Desktop success message could go here */ alert('Item saved!'); }
+            itemForm.reset();
+
+            // Reload all relevant lists and stats after adding
+            loadExpiringItems();
+            loadAllItems();
+            if (uiType === 'desktop') {
+                checkExpiringItemsForHomeTab(); // Refresh home tab too
+            }
+
+            // Re-enable appropriately
+            if (submitButton) submitButton.disabled = false;
+            if (uiType === 'mobile') setFormEnabled(true);
+          })
+          .withFailureHandler(err => {
+            alert('Error saving item: ' + (err.message || JSON.stringify(err)));
+             if (submitButton) submitButton.disabled = false;
+             if (uiType === 'mobile') setFormEnabled(true);
+          })
+          // Pass category to backend if your GAS function supports it
+          .addItem(name, quantityValue, expiryDateValue, category); // Make sure backend addItem handles category if sent
+      }
+
+      function loadAllItems() {
+        console.log("Calling GAS: getAllItems");
+        if (!allItemsList || !noItems) { console.error("Cannot load all items: List or empty state element not found."); return; }
+        // Add a temporary loading state specific to this list
+         allItemsList.innerHTML = `<li class="inventory-item"><div class="item-info">Loading inventory...</div></li>`;
+        noItems.style.display = 'none'; // Assume items might load
+
+        google.script.run
+          .withSuccessHandler(function (items) {
+            console.log("GAS getAllItems Success:", items ? items.length : 0);
+            allItemsList.innerHTML = ''; // Clear loading or previous items
+            if (!items || items.length === 0) { noItems.style.display = 'flex'; }
+            else {
+              noItems.style.display = 'none';
+              items.forEach(function (item) {
+                // Ensure item data is valid
+                if (!item || typeof item.item === 'undefined' || typeof item.quantity === 'undefined' || typeof item.expiryDate === 'undefined') {
+                    console.warn("Skipping invalid item data:", item);
+                    return;
+                }
+                // The new template uses a simple div with item-info and item-actions inside
+                const itemElement = document.createElement('li'); // Use li for list
+                itemElement.className = 'inventory-item'; // Use the class from new.html CSS
+
+                // Determine status for coloring based on expiry date (logic copied from new.html JS)
+                let statusClass = '';
+                const today = new Date();
+                const expiry = new Date(convertToISODate(item.expiryDate)); // Use conversion
+                const diffDays = Math.ceil((expiry - today) / (1000 * 60 * 60 * 24));
+
+                if (diffDays < 0) {
+                  statusClass = 'expired-item';
+                } else if (diffDays <= 3) { // Check if <= 3 for 'expiring-item'
+                  statusClass = 'expiring-item';
+                }
+                if (statusClass) itemElement.classList.add(statusClass);
+
+                const escapedItemName = item.item ? item.item.replace(/'/g, "\\'") : 'unknown_item'; // Handle potential undefined item name
+
+                itemElement.innerHTML = `
+                    <div class="item-info">
+                        <div class="item-name">${item.item || 'N/A'}</div>
+                        <div class="item-details">
+                            <span><i class="fas fa-balance-scale"></i> ${item.quantity || 'N/A'}</span>
+                            <span><i class="far fa-calendar-alt"></i> ${formatDate(item.expiryDate)}</span> <!-- Use formatDate -->
+                        </div>
+                    </div>
+                    <div class="item-actions">
+                        <button class="delete-btn" onclick="window.deleteItem('${escapedItemName}')" title="Delete ${item.item || ''}">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>`;
+
+                allItemsList.appendChild(itemElement);
+              });
+            }
+          })
+          .withFailureHandler(err => {
+              console.error("Failed to load all items:", err);
+              allItemsList.innerHTML = ''; // Clear loading state
+              noItems.style.display = 'flex';
+              noItems.innerHTML = '<div class="empty-icon"><i class="fas fa-exclamation-triangle"></i></div><p>Error loading inventory items.</p>'; // Use new.html empty state style
+          })
+          .getAllItems(); // Backend function - Assumes this function still exists and works
+      }
+
+      // Function to load expiring and expired items for the Inventory tab lists
+      function loadExpiringItems() {
+              console.log("Calling GAS: getExpiringItems");
+              if (!expiringList || !noExpiring || !expiredList || !noExpired) {
+                  console.error("Cannot load expiring/expired items: Inventory tab lists or empty state elements not found.");
+                  return;
+              }
+              // Add temporary loading state
+              expiringList.innerHTML = `<li class="inventory-item"><div class="item-info">Loading expiring items...</div></li>`;
+              expiredList.innerHTML = `<li class="inventory-item"><div class="item-info">Loading expired items...</div></li>`;
+              noExpiring.style.display = 'none'; // Assume items might load
+              noExpired.style.display = 'none'; // Assume items might load
+
+
+              google.script.run
+                  .withSuccessHandler((data) => {
+                      console.log("GAS getExpiringItems Success:", data);
+                      if (!data || !Array.isArray(data.expiring) || !Array.isArray(data.expired)) {
+                          console.error("Invalid data structure received for expiring/expired items.");
+                          expiringList.innerHTML = '';
+                          expiredList.innerHTML = '';
+                          noExpiring.style.display = 'flex';
+                          noExpired.style.display = 'flex';
+                          noExpiring.innerHTML = '<div class="empty-icon"><i class="fas fa-exclamation-triangle"></i></div><p>Error loading expiring items.</p>';
+                          noExpired.innerHTML = '<div class="empty-icon"><i class="fas fa-exclamation-triangle"></i></div><p>Error loading expired items.</p>';
+                          return;
+                      }
+
+                      expiringList.innerHTML = ''; // Clear loading or previous items
+                      expiredList.innerHTML = ''; // Clear loading or previous items
+
+                      // Populate Expiring Soon list
+                      if (data.expiring.length === 0) {
+                          noExpiring.style.display = 'flex';
+                      } else {
+                          noExpiring.style.display = 'none';
+                          data.expiring.forEach(item => {
+                              if (!item || !item.item) return;
+                               const escapedItemName = item.item ? item.item.replace(/'/g, "\\'") : 'unknown_item';
+                               const itemElement = document.createElement('li');
+                               itemElement.className = 'inventory-item expiring-item'; // Use new.html class
+                               itemElement.innerHTML = `
+                                  <div class="item-info">
+                                    <div class="item-name">${item.item}</div>
+                                    <div class="item-details">
+                                      <span><i class="fas fa-balance-scale"></i> ${item.quantity}</span>
+                                      <span><i class="far fa-calendar-alt"></i> ${formatDate(item.expiryDate)}</span>
+                                    </div>
+                                  </div>
+                                  <div class="item-actions">
+                                    <button class="delete-btn" onclick="window.deleteItem('${escapedItemName}')" title="Delete ${item.item}">
+                                      <i class="fas fa-trash"></i>
+                                    </button>
+                                  </div>`;
+                              expiringList.appendChild(itemElement);
+                          });
+                      }
+
+                      // Populate Expired Items list
+                      if (data.expired.length === 0) {
+                          noExpired.style.display = 'flex';
+                      } else {
+                          noExpired.style.display = 'none';
+                          data.expired.forEach(item => {
+                              if (!item || !item.item) return;
+                               const escapedItemName = item.item ? item.item.replace(/'/g, "\\'") : 'unknown_item';
+                               const itemElement = document.createElement('li');
+                               itemElement.className = 'inventory-item expired-item'; // Use new.html class
+                               itemElement.innerHTML = `
+                                  <div class="item-info">
+                                    <div class="item-name">${item.item}</div>
+                                    <div class="item-details">
+                                      <span><i class="fas fa-balance-scale"></i> ${item.quantity}</span>
+                                      <span><i class="far fa-calendar-alt"></i> ${formatDate(item.expiryDate)}</span>
+                                    </div>
+                                  </div>
+                                  <div class="item-actions">
+                                    <button class="delete-btn" onclick="window.deleteItem('${escapedItemName}')" title="Delete ${item.item}">
+                                      <i class="fas fa-trash"></i>
+                                    </button>
+                                  </div>`;
+                              expiredList.appendChild(itemElement);
+                          });
+                      }
+                  })
+                  .withFailureHandler(err => {
+                      console.error("Failed to load expiring/expired items:", err);
+                      expiringList.innerHTML = '';
+                      expiredList.innerHTML = '';
+                      noExpiring.style.display = 'flex';
+                      noExpiring.innerHTML = '<div class="empty-icon"><i class="fas fa-exclamation-triangle"></i></div><p>Error loading expiring items.</p>';
+                      noExpired.style.display = 'flex';
+                      noExpired.innerHTML = '<div class="empty-icon"><i class="fas fa-exclamation-triangle"></i></div><p>Error loading expired items.</p>';
+                  })
+                  .getExpiringItems(); // Backend function - Assumes this function still exists and works
+          }
+
+
+        // Function to check for expiring items and display notifications on the HOME tab
+       function checkExpiringItemsForHomeTab() {
+           console.log("Calling GAS: getExpiringItems (for home tab)");
+           // Get home tab specific list elements
+           const expiringFoodList = document.getElementById('expiringFoodList');
+           const expiredFoodList = document.getElementById('expiredFoodList');
+           const noExpiringFood = document.getElementById('noExpiringFood');
+           const noExpiredFood = document.getElementById('noExpiredFood');
+           const expiringSoonCountElement = document.getElementById('expiringSoonCount');
+           const expiredCountElement = document.getElementById('expiredCount');
+           const totalItemsCountElement = document.getElementById('totalItemsCount');
+
+
+           if (!expiringFoodList || !expiredFoodList || !noExpiringFood || !noExpiredFood || !expiringSoonCountElement || !expiredCountElement || !totalItemsCountElement) {
+               console.warn("Home tab elements not found for notifications/stats.");
+               return; // Exit if elements don't exist (e.g., on mobile)
+           }
+
+           // Add temporary loading states for home tab lists and maybe counts
+            expiringFoodList.innerHTML = `<li class="inventory-item"><div class="item-info">Loading notifications...</div></li>`;
+            expiredFoodList.innerHTML = `<li class="inventory-item"><div class="item-info">Loading expired list...</div></li>`;
+            expiringSoonCountElement.textContent = '--';
+            expiredCountElement.textContent = '--';
+            totalItemsCountElement.textContent = '--';
+
+
+           google.script.run
+               .withSuccessHandler(function(result) {
+                   console.log("GAS getExpiringItems (for home tab) Success:", result);
+                   const expiringItems = result.expiring || [];
+                   const expiredItems = result.expired || [];
+                   const allItems = result.all || []; // Assuming backend returns all items too or you fetch them separately
+
+                   // Update count displays (assuming result includes counts or fetch all items separately)
+                   expiringSoonCountElement.textContent = expiringItems.length;
+                   expiredCountElement.textContent = expiredItems.length;
+                   // If backend doesn't return total, need a separate loadAllItems call or count manually from combined lists
+                   // Assuming for now that `result` might include `totalCount` or `all` array
+                   totalItemsCountElement.textContent = result.totalCount !== undefined ? result.totalCount : allItems.length;
+
+
+                   // Update expiring items on home page
+                   expiringFoodList.innerHTML = ''; // Clear loading state
+                   if (expiringItems.length === 0) {
+                       noExpiringFood.style.display = 'block';
+                   } else {
+                       noExpiringFood.style.display = 'none';
+                       expiringItems.forEach(item => {
+                           const itemElement = document.createElement('li');
+                           itemElement.className = 'inventory-item expiring-item'; // Use new.html class
+                           itemElement.innerHTML = `
+                               <div class="item-info">
+                                 <div class="item-name">${item.item}</div>
+                                 <div class="item-details">
+                                   <span><i class="fas fa-balance-scale"></i> ${item.quantity}</span>
+                                   <span><i class="far fa-calendar-alt"></i> ${formatDate(item.expiryDate)}</span>
+                                 </div>
+                               </div>`;
+                           expiringFoodList.appendChild(itemElement);
+                       });
+                   }
+
+                   // Update expired items on home page
+                   expiredFoodList.innerHTML = ''; // Clear loading state
+                   if (expiredItems.length === 0) {
+                       noExpiredFood.style.display = 'block';
+                   } else {
+                       noExpiredFood.style.display = 'none';
+                       expiredItems.forEach(item => {
+                           const itemElement = document.createElement('li');
+                           itemElement.className = 'inventory-item expired-item'; // Use new.html class
+                           itemElement.innerHTML = `
+                               <div class="item-info">
+                                 <div class="item-name">${item.item}</div>
+                                 <div class="item-details">
+                                   <span><i class="fas fa-balance-scale"></i> ${item.quantity}</span>
+                                   <span><i class="far fa-calendar-alt"></i> ${formatDate(item.expiryDate)}</span>
+                                 </div>
+                               </div>`;
+                           expiredFoodList.appendChild(itemElement);
+                       });
+                   }
+
+               })
+               .withFailureHandler(function(error) {
+                 console.error('Error checking expiring items for home tab:', error);
+                  // Clear lists and show error in empty states or use alerts
+                  expiringFoodList.innerHTML = ''; expiredFoodList.innerHTML = '';
+                  noExpiringFood.style.display = 'block'; noExpiredFood.style.display = 'block';
+                  noExpiringFood.innerHTML = '<div class="empty-icon"><i class="fas fa-exclamation-triangle"></i></div><p>Error loading expiring notifications.</p>';
+                  noExpiredFood.innerHTML = '<div class="empty-icon"><i class="fas fa-exclamation-triangle"></i></div><p>Error loading expired items list.</p>';
+                  expiringSoonCountElement.textContent = 'Error';
+                  expiredCountElement.textContent = 'Error';
+                  totalItemsCountElement.textContent = 'Error';
+
+               })
+               .getExpiringItems(); // Assume this function returns { expiring: [...], expired: [...], all: [...] } or similar
+       }
+
+
+      // Make deleteItem globally accessible for onclick in item elements
+      window.deleteItem = function(itemName) {
+        if (!itemName) {
+            console.error("Attempted to delete item with empty name.");
+            alert("Error: Cannot delete item with empty name.");
+            return;
+        }
+        if (confirm(`Are you sure you want to delete "${itemName}"?`)) {
+          console.log(`Calling GAS: deleteItem for "${itemName}"`);
+          google.script.run
+            .withSuccessHandler(result => {
+              console.log("Delete success:", result);
+              // Refresh relevant lists and stats after deletion
+              loadExpiringItems();
+              loadAllItems();
+              if (uiType === 'desktop') {
+                  checkExpiringItemsForHomeTab(); // Refresh home tab too
+              }
+            })
+            .withFailureHandler(err => {
+              console.error("Failed to delete item:", err);
+              alert('Error deleting item: ' + (err.message || JSON.stringify(err)));
+            })
+            .deleteItem(itemName); // Backend function - Assumes this function still exists and works
+        }
+      }
+
+      function confirmDeleteAll() {
+          if (confirm("Are you sure you want to delete ALL items? This cannot be undone.")) {
+              console.log("Calling GAS: deleteAllItems");
+              // Add visual indication if needed
+              google.script.run
+                  .withSuccessHandler(() => {
+                      console.log("All items deleted successfully");
+                      // Refresh all relevant lists and stats
+                      loadExpiringItems();
+                      loadAllItems();
+                       if (uiType === 'desktop') {
+                          checkExpiringItemsForHomeTab(); // Refresh home tab too
+                      }
+                  })
+                  .withFailureHandler(err => {
+                      console.error("Failed to delete all items:", err);
+                      alert("Error deleting all items: " + (err.message || JSON.stringify(err)));
+                      // Remove visual indication if needed
+                  })
+                  .deleteAllItems(); // Backend function - Assumes this function still exists and works
+          }
+      }
+
+
+       // New Combo Box Function (from new.html) - Make globally accessible or called correctly
+       // Assuming this is needed by the handleItemSubmit and getSuggestions functions
+       if (uiType === 'desktop') { // Only add this to global scope on desktop
+           window.handleComboChange = function handleComboChange(selectElement, customInputId) {
+               const customInput = document.getElementById(customInputId);
+               if (customInput) { // Check if element exists
+                   if (selectElement.value === 'other') {
+                       customInput.style.display = 'block';
+                   } else {
+                       customInput.style.display = 'none';
+                       customInput.value = ''; // Clear custom input if another option is selected
+                   }
+               }
+           }
+
+            // Function to get the value from a combo box (either dropdown or custom input) - From new.html JS
+           window.getComboValue = function getComboValue(selectId, customInputId) {
+             const selectElement = document.getElementById(selectId);
+             const customInput = document.getElementById(customInputId);
+
+             if (selectElement && customInput && selectElement.value === 'other' && customInput.value.trim() !== '') {
+               return customInput.value.trim();
+             } else if (selectElement) {
+               return selectElement.value;
+             }
+             return ''; // Return empty string if elements not found
+           }
+       }
+
+
+      function getSuggestions() {
+          //if (!suggestBtn || !loader || !suggestionsOutput || !saveToDocBtn) { console.error("Cannot get suggestions: Missing required elements."); return; }
+
+         // New: Read preferences from the new combo boxes on desktop
+          let userPreference = '';
+          if (uiType === 'desktop') {
+              const dietaryPref = getComboValue('dietaryPreference', 'custom-dietary');
+              const foodPref = getComboValue('foodPreference', 'custom-food');
+              const cuisinePref = getComboValue('cuisinePreference', 'custom-cuisine');
+              // Combine preferences into a single string for the backend (adjust if backend expects structured data)
+              userPreference = [dietaryPref, foodPref, cuisinePref].filter(p => p).join(', ');
+               if (userPreferenceInput) userPreferenceInput.value = userPreference; // Optional: update the old userPreferenceInput if it exists
+          } else if (userPreferenceInput) {
+             // Mobile uses the old single text input
+              userPreference = userPreferenceInput.value.trim();
+          }
+
+
+          suggestBtn.disabled = true;
+          saveToDocBtn.disabled = true;
+          // New: Hide save confirmation messages when generating
+          const saveConfirmation = document.querySelector('.desktop-ui .save-confirmation');
+          if (saveConfirmation) saveConfirmation.style.display = 'none';
+
+          if (loader) loader.style.display = 'block';
+          // Use new.html style loading text, ensure suggestionsOutput exists
+          if (suggestionsOutput) {
+             suggestionsOutput.innerHTML = '<div style="text-align:center;color:var(--text-light);"><i class="fas fa-spinner fa-spin"></i> Generating recipe ideas...</div>';
+             suggestionsOutput.style.display = 'block'; // Ensure the container is visible
+          } else {
+              console.error("suggestionsOutput element not found!");
+              // Handle error display without suggestionsOutput if necessary
+              alert("UI Error: Recipe output area not found.");
+              if (loader) loader.style.display = 'none';
+              if (suggestBtn) suggestBtn.disabled = false;
+              if (saveToDocBtn) saveToDocBtn.disabled = true;
+              return; // Stop execution if required element is missing
+          }
+
+
+          console.log(`Calling GAS: savePreferenceAndGetSuggestions with preferences: ${userPreference}`);
+          google.script.run
+              .withSuccessHandler((result) => {
+                  console.log("GAS Suggestion Success. Received result:", result); // ADD THIS LOG
+
+                  if (loader) loader.style.display = 'none';
+                  if (suggestBtn) suggestBtn.disabled = false;
+
+                  try {
+                       // Assuming backend returns JSON
+                       const data = JSON.parse(result);
+                       console.log("Parsed recipe data:", data); // ADD THIS LOG
+
+                       if (data.error) {
+                           console.error("Backend reported an error:", data.message); // Log backend error message
+                           throw new Error(data.message || "Unknown recipe generation error.");
+                       }
+                       // Check if data.recipes exists, is an array, and has items
+                       if (!data.recipes || !Array.isArray(data.recipes) || data.recipes.length === 0) {
+                            console.warn("No recipes found in the result."); // Log if no recipes
+                            if (suggestionsOutput) suggestionsOutput.innerHTML = '<div class="empty-state"><div class="empty-icon"><i class="fas fa-utensils"></i></div><p>No recipe ideas generated based on your inventory and preferences.</p></div>';
+                            if (saveToDocBtn) saveToDocBtn.disabled = true;
+                       } else {
+                           console.log(`Rendering ${data.recipes.length} recipes.`); // Log recipe count
+                           renderRecipeCards(data.recipes); // Call the function to render cards
+                            if (saveToDocBtn) saveToDocBtn.disabled = false; // Enable save if recipes were generated
+                       }
+
+                  } catch (e) {
+                     console.error("Error processing recipe suggestion result:", e);
+                      // Display error inside suggestionsOutput
+                      if (suggestionsOutput) suggestionsOutput.innerHTML = `<div class="empty-state" style="display:flex;"><div class="empty-icon" style="color:var(--danger);"><i class="fas fa-exclamation-triangle"></i></div><p>Error displaying recipes: ${e.message}. Check console for details.</p></div>`;
+                     if (saveToDocBtn) saveToDocBtn.disabled = true; // Disable save on error
+                  }
+
+              })
+              .withFailureHandler((err) => {
+                  console.error("Recipe Suggestion Error (GAS call failed):", err); // Log the GAS failure error
+                  // Display error inside suggestionsOutput
+                  if (suggestionsOutput) suggestionsOutput.innerHTML = `<div class="empty-state" style="display:flex;"><div class="empty-icon" style="color:var(--danger);"><i class="fas fa-exclamation-triangle"></i></div><p>Error generating recipes: ${err.message || 'An unknown error occurred.'}</p></div>`;
+                  if (loader) loader.style.display = 'none';
+                  if (suggestBtn) suggestBtn.disabled = false;
+                  if (saveToDocBtn) saveToDocBtn.disabled = true;
+              })
+              // Pass individual preferences or combined string to backend
+              .savePreferenceAndGetSuggestions(userPreference, uiType); // Ensure backend handles these preferences
+      }
+      // These recipe functions are now needed if using the new.html recipe display structure
+      let currentRecipeIndex = 0;
+      let recipesGlobal = [];
+      const recipeRatings = {}; // Store ratings and feedback
+
+      function renderRecipeCards(recipes)
+      {
+        recipesGlobal = recipes;
+        currentRecipeIndex = 0; // Start with the first recipe
+        // Ensure suggestionsOutput is cleared before adding cards
+         if (suggestionsOutput) suggestionsOutput.innerHTML = '';
+
+         // Create the container for the recipe flashcard navigation if it doesn't exist
+         let navContainer = document.querySelector('.desktop-ui .recipe-navigation');
+         if (!navContainer && suggestionsOutput) {
+             navContainer = document.createElement('div');
+             navContainer.className = 'recipe-navigation';
+              // Add buttons and container for flashcard
+              navContainer.innerHTML = `
+                <button class="nav-arrow left" onclick="window.prevRecipe()"><i class="fas fa-chevron-left"></i></button>
+                <div class="recipe-flashcard"></div>
+                <button class="nav-arrow right" onclick="window.nextRecipe()"><i class="fas fa-chevron-right"></i></button>
+              `;
+              suggestionsOutput.appendChild(navContainer); // Append this structure inside suggestionsOutput
+         }
+
+
+        if (recipesGlobal.length > 0) {
+             showRecipe(currentRecipeIndex);
+        } else if (suggestionsOutput) {
+             // Handle case where renderRecipeCards is called with empty array
+             suggestionsOutput.innerHTML = '<div class="empty-state" style="display:flex;"><div class="empty-icon"><i class="fas fa-utensils"></i></div><p>No recipe ideas generated.</p></div>';
+        }
+
+        // Attach event listeners to the new navigation buttons if they were created
+         const leftArrow = navContainer ? navContainer.querySelector('.nav-arrow.left') : null;
+         const rightArrow = navContainer ? navContainer.querySelector('.nav-arrow.right') : null;
+         if (leftArrow) leftArrow.onclick = window.prevRecipe;
+         if (rightArrow) rightArrow.onclick = window.nextRecipe;
+         // Ensure these functions are in the global scope or accessible
+
+
+      }
+
+      function showRecipe(index) {
+        if (!recipesGlobal || recipesGlobal.length === 0) {
+            console.warn("showRecipe called with no recipes.");
+            return;
+        }
+        if (index < 0 || index >= recipesGlobal.length) {
+            console.warn("showRecipe called with invalid index:", index);
+            return;
+        }
+
+        const recipe = recipesGlobal[index];
+        const flashcardContainer = document.querySelector('.desktop-ui .recipe-flashcard'); // Get the inner container
+
+        if (!flashcardContainer) { console.error("Recipe flashcard container not found."); return; }
+
+        // Initialize recipe rating object if needed
+        if (!recipeRatings[index]) {
+          recipeRatings[index] = {
+            userRating: 0,
+            feedback: ""
+          };
+        }
+
+        const ingredientsList = recipe.ingredients.map(ing => {
+          const tag = ing.expiring ? '<span style="color:red;font-weight:bold;">(expiring)</span>' : '';
+          return `<li style="margin-bottom: 4px;">${ing.name} - ${ing.quantity || 'N/A'} ${tag}</li>`;
+        }).join('');
+
+        const instructions = recipe.instructions.map((step) =>
+          `<li style="margin-bottom: 4px;">${step}</li>`
+        ).join('');
+
+        // Get current user rating or default to 0
+        const userRating = recipeRatings[index].userRating || 0;
+        const feedbackMessage = recipeRatings[index].feedback || "Rate this recipe!";
+
+        // Update the flashcard content
+        flashcardContainer.innerHTML = `
+              <h3 style="margin-bottom: 8px;">${recipe.title}</h3>
+
+              <!-- Rating system -->
+              <div class="rating-container" style="margin-bottom: 8px; display: flex; align-items: center;">
+                <div class="stars" style="display: inline-block;">
+                  <!-- Stars will be added/updated by updateStarDisplay -->
+                </div>
+                <span style="margin-left: 10px; font-weight: bold;">${userRating > 0 ? userRating.toFixed(1) : '-'}</span>
+                <span id="feedbackMessage" style="margin-left: 10px; font-size: 0.9em; color: #555; font-style: italic;">${feedbackMessage}</span>
+              </div>
+
+              <div style="display: flex; justify-content: space-between; flex-wrap: wrap; margin-bottom: 6px;">
+                <p style="margin: 0;"><strong>Difficulty:</strong> ${recipe.difficulty || 'N/A'}</p>
+                <p style="margin: 0;"><strong>Time:</strong> Prep ${recipe.prepTime || 'N/A'} + Cook ${recipe.cookTime || 'N/A'}</p>
+              </div>
+
+              ${recipe.imagePrompt ? `<img src="https://image.pollinations.ai/prompt/${encodeURIComponent(recipe.imagePrompt + ', ' + recipe.title)}" alt="recipe image of ${recipe.title}" style="width:100%;border-radius:12px;margin:10px 0;">` : ''}
+
+
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                <h4 style="margin: 6px 0;">Ingredients:</h4>
+                <!-- Nutritional information link -->
+                ${recipe.nutritionSource ? `<a href="${recipe.nutritionSource}" target="_blank" class="nutrition-link" style="color: var(--primary-dark); text-decoration: underline; font-size: 0.9em;"><i class="fas fa-info-circle"></i> Nutritional Info</a>` : ''}
+              </div>
+
+              <ul style="margin-top: 4px;">${ingredientsList || '<li>No ingredients listed.</li>'}</ul>
+              <h4 style="margin: 6px 0;">Instructions:</h4>
+              <ol style="margin-top: 4px;">${instructions || '<li>No instructions listed.</li>'}</ol>
+              <p style="margin: 6px 0;"><strong>Dietary Info:</strong> ${recipe.dietaryInfo && recipe.dietaryInfo.length > 0 ? recipe.dietaryInfo.join(', ') : 'N/A'}</p>
+              <div class="recipe-page-indicator" style="margin-top: 4px;">${index + 1} / ${recipesGlobal.length}</div>
+        `;
+
+        // Update the star display to match current rating (needs to be called *after* innerHTML is set)
+        updateStarDisplay(index);
+
+         // Update button states (e.g., disable arrows if only one recipe)
+         const leftArrow = document.querySelector('.desktop-ui .nav-arrow.left');
+         const rightArrow = document.querySelector('.desktop-ui .nav-arrow.right');
+         if (leftArrow) leftArrow.disabled = recipesGlobal.length <= 1;
+         if (rightArrow) rightArrow.disabled = recipesGlobal.length <= 1;
+
+      }
+
+      function updateStarDisplay(recipeIndex) {
+        const starsContainer = document.querySelector('.desktop-ui .stars');
+        if (!starsContainer) return;
+
+        const currentRating = recipeRatings[recipeIndex].userRating || 0;
+
+        // Clear previous stars
+        starsContainer.innerHTML = '';
+
+        // Create and add stars
+        for (let i = 1; i <= 5; i++) {
+            const starIcon = document.createElement('i');
+            starIcon.className = `star fas fa-star`; // Start assuming it's filled
+            starIcon.setAttribute('data-value', i);
+             if (i > currentRating) { // If star value is greater than current rating, make it outline
+                starIcon.classList.remove('fas');
+                starIcon.classList.add('far');
+             }
+            // Attach the rating click handler
+            starIcon.onclick = () => rateRecipe(recipeIndex, i);
+            starsContainer.appendChild(starIcon);
+        }
+
+      }
+
+      function rateRecipe(recipeIndex, rating) {
+        // Ensure we are rating the currently displayed recipe
+        if (recipeIndex !== currentRecipeIndex || !recipesGlobal[recipeIndex]) {
+             console.warn("Attempted to rate a recipe that is not currently displayed or does not exist.");
+             return;
+        }
+        const recipeTitle = recipesGlobal[recipeIndex].title;
+        if (!recipeTitle) {
+             console.warn("Attempted to rate a recipe with no title.");
+             return;
+        }
+
+        // Store the user's rating
+        recipeRatings[recipeIndex].userRating = rating;
+
+        // Update the star display visually
+        updateStarDisplay(recipeIndex);
+
+        // Show loading feedback on the message span
+        const feedbackSpan = document.getElementById('feedbackMessage');
+        if (feedbackSpan) feedbackSpan.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Getting feedback...`;
+
+        // Send rating to backend and wait for AI feedback response
+        console.log(`Calling GAS: recordRecipeRating for "${recipeTitle}" with rating ${rating}`);
+        google.script.run
+          .withSuccessHandler((feedback) => {
+            console.log("Recipe rating feedback received:", feedback);
+            // Store and display the feedback
+            recipeRatings[recipeIndex].feedback = feedback || "Thanks for your rating!";
+            if (feedbackSpan) feedbackSpan.innerText = recipeRatings[recipeIndex].feedback;
+          })
+          .withFailureHandler((err) => {
+            console.error("Failed to get rating feedback:", err);
+             // Display a default message and store the error
+            recipeRatings[recipeIndex].feedback = "Thanks for your rating!"; // Keep positive user message
+            if (feedbackSpan) feedbackSpan.innerText = recipeRatings[recipeIndex].feedback;
+            // Maybe store the error separately if needed for debugging
+            recipeRatings[recipeIndex].feedbackError = err.message || JSON.stringify(err);
+          })
+          .recordRecipeRating(recipeTitle, rating); // Ensure this backend function exists and works
+      }
+
+      // Make navigation functions globally accessible
+      window.prevRecipe = function() {
+        if (!recipesGlobal || recipesGlobal.length <= 1) return;
+        currentRecipeIndex = (currentRecipeIndex - 1 + recipesGlobal.length) % recipesGlobal.length;
+        showRecipe(currentRecipeIndex);
+      }
+
+      window.nextRecipe = function() {
+         if (!recipesGlobal || recipesGlobal.length <= 1) return;
+        currentRecipeIndex = (currentRecipeIndex + 1) % recipesGlobal.length;
+        showRecipe(currentRecipeIndex);
+      }
+
+
+      // Function to format date (from new.html JS)
+      function convertToISODate(ddmmyyyy) {
+          if (!ddmmyyyy || typeof ddmmyyyy !== 'string') return null;
+           const parts = ddmmyyyy.split('/');
+           if (parts.length === 3) {
+             const [day, month, year] = parts;
+             // Check if parts are valid numbers and within plausible ranges
+             if (!isNaN(day) && !isNaN(month) && !isNaN(year) && parseInt(day) >= 1 && parseInt(day) <= 31 && parseInt(month) >= 1 && parseInt(month) <= 12 && parseInt(year) > 1900) {
+                return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+             }
+           }
+           // If ddmmyyyy doesn't match expected format, maybe it's already YYYY-MM-DD or some other valid date string?
+           // Simple Date object constructor might handle some formats, but d/m/y is tricky.
+           // Let's try parsing with a specific format first, fallback to Date constructor.
+           const [d, m, y] = ddmmyyyy.split(/[\/\-]/); // Split by / or -
+            if (d && m && y && y.length === 4) {
+                 // Assuming d/m/yyyy or d-m-yyyy
+                const dateObj = new Date(y, m - 1, d); // Month is 0-indexed
+                if (!isNaN(dateObj.getTime())) {
+                    return dateObj.toISOString().split('T')[0]; // Return YYYY-MM-DD
+                }
+            } else {
+                 // Try Date constructor for other formats (like "Mon Jan 01 2024")
+                const dateObj = new Date(ddmmyyyy);
+                if (!isNaN(dateObj.getTime())) {
+                     return dateObj.toISOString().split('T')[0]; // Return YYYY-MM-DD
+                }
+            }
+
+
+          console.warn("Could not convert date string to ISO:", ddmmyyyy);
+          return null; // Indicate failure
+      }
+
+     // Function to convert DD/MM/YYYY to YYYY-MM-DD
+function convertToISODate(dateStr) {
+  if (!dateStr) return null;
+  
+  // Handle DD/MM/YYYY format with various separators
+  const match = dateStr.match(/^(\d{1,2})[\/\.-](\d{1,2})[\/\.-](\d{4})$/);
+  if (match) {
+    const [_, day, month, year] = match;
+    return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+  }
+  
+  return null;
+}
+
+// Function to format date for display
+function formatDate(dateStringOrISO) {
+  if (!dateStringOrISO) return 'Unknown';
+  let dateObj;
+
+  // Attempt to parse as YYYY-MM-DD first (from input type="date")
+  const isoMatch = dateStringOrISO.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (isoMatch) {
+    // YYYY-MM-DD format
+    dateObj = new Date(parseInt(isoMatch[1]), parseInt(isoMatch[2]) - 1, parseInt(isoMatch[3]));
+  } else {
+    // Attempt to convert from DD/MM/YYYY to ISO
+    const isoDateStr = convertToISODate(dateStringOrISO);
+    if (isoDateStr) {
+      dateObj = new Date(isoDateStr);
+    } else {
+      // Fallback to Date constructor for other formats
+      dateObj = new Date(dateStringOrISO);
+    }
+  }
+
+  if (isNaN(dateObj.getTime())) {
+    console.warn("Invalid date provided for formatting:", dateStringOrISO);
+    return 'Invalid Date';
+  }
+
+  const options = { year: 'numeric', month: 'short', day: 'numeric' };
+  try {
+    return dateObj.toLocaleDateString(undefined, options);
+  } catch (e) {
+    console.error("Error formatting date:", dateStringOrISO, e);
+    return dateObj.toISOString().split('T')[0]; // Fallback to ISO if locale fails
+  }
+}
+
+
+      // Function to load recipe history (from new.html JS) - Make globally accessible
+      if (uiType === 'desktop') { // Only needed on desktop template
+          window.loadRecipeHistory = function loadRecipeHistory() {
+            // Call Google Apps Script to retrieve recipe files
+            console.log("Calling GAS: getRecipeHistory");
+            google.script.run
+              .withSuccessHandler(function(recipes) {
+                console.log("GAS getRecipeHistory Success:", recipes ? recipes.length : 0);
+                const recipeHistoryList = document.getElementById('recipeHistoryList');
+                const noRecipeHistory = document.getElementById('noRecipeHistory');
+
+                if (!recipeHistoryList || !noRecipeHistory) {
+                     console.warn("Recipe history elements not found.");
+                     return; // Exit if elements don't exist
+                }
+
+                // Clear previous items
+                recipeHistoryList.innerHTML = '';
+
+                if (!recipes || recipes.length === 0) {
+                  // If no recipes, make noRecipeHistory element visible
+                  noRecipeHistory.style.display = 'flex';
+                } else {
+                  // If recipes exist, hide the empty state
+                  noRecipeHistory.style.display = 'none';
+
+                  // Sort recipes by last modified date (newest first)
+                  recipes.sort((a, b) => new Date(b.lastModified) - new Date(a.lastModified));
+
+                  recipes.forEach(function(recipe) {
+                    // Create new div and populate with HTML content for recipe details
+                    const div = document.createElement('div');
+                    div.className = 'recipe-history-item';
+                    div.innerHTML = `
+                      <div class="item-info">
+                        <div class="item-name">${recipe.title || 'Untitled Recipe'}</div>
+                        <div class="item-details">
+                          <span><i class="far fa-calendar-alt"></i> ${recipe.lastModified || 'Unknown Date'}</span>
+                        </div>
+                      </div>
+                      ${recipe.url ? `<a href="${recipe.url}" target="_blank" class="view-recipe-btn" title="View Recipe in Google Docs"><i class="fas fa-external-link-alt"></i></a>` : '<span class="view-recipe-btn" style="background:#ccc; cursor:not-allowed;" title="No Doc link available"><i class="fas fa-external-link-alt"></i></span>'}
+                    `;
+                    recipeHistoryList.appendChild(div);
+                  });
+                }
+              })
+              .withFailureHandler(err => {
+                  console.error("Failed to load recipe history:", err);
+                   const recipeHistoryList = document.getElementById('recipeHistoryList');
+                   const noRecipeHistory = document.getElementById('noRecipeHistory');
+                   if (recipeHistoryList) recipeHistoryList.innerHTML = '';
+                   if (noRecipeHistory) {
+                        noRecipeHistory.style.display = 'flex';
+                         noRecipeHistory.innerHTML = '<div class="empty-icon"><i class="fas fa-exclamation-triangle"></i></div><div>Error loading recipe history.</div>';
+                   }
+
+              })
+              .getRecipeHistory(); // Ensure this backend function exists and works
+          }
+      }
+
+
+      // --- Mobile-Only Image Handling Functions ---
+      // Define these functions only within the mobile scope
+      if (uiType === 'mobile') {
+            function handleImageFileSelectGeneric(event, inputElement, statusElement, buttonElement, backendFunctionName, successCallback, failureCallback) {
+              if (!inputElement || !statusElement || !buttonElement) return; // Guard
+              const files = event.target.files; if (!files || files.length === 0) { setFieldStatus(statusElement, '', false); return; }
+              const file = files[0]; const MAX_SIZE_MB = 3.8;
+              if (file.size > MAX_SIZE_MB * 1024 * 1024) { failureCallback(`Error: Image size exceeds ${MAX_SIZE_MB}MB limit.`, true, statusElement, inputElement, buttonElement); return; }
+              if (!file.type.startsWith('image/')) { failureCallback('Error: Please select an image file.', true, statusElement, inputElement, buttonElement); return; }
+              setFieldStatus(statusElement, 'Processing image...', false); setButtonEnabled(buttonElement, false); const reader = new FileReader();
+              reader.onload = (e) => {
+                const imageDataUrl = e.target.result; if (!imageDataUrl || !imageDataUrl.includes(',')) { failureCallback('Error: Could not read image data.', true, statusElement, inputElement, buttonElement); return; }
+                const mimeTypeMatch = imageDataUrl.match(/^data:(image\/\w+);base64,/); const mimeType = (mimeTypeMatch && mimeTypeMatch[1]) ? mimeTypeMatch[1] : file.type; const base64Data = imageDataUrl.substring(imageDataUrl.indexOf(',') + 1);
+                setFieldStatus(statusElement, 'Analyzing image with AI...', false); console.log(`Calling GAS: ${backendFunctionName}`);
+                google.script.run.withSuccessHandler(result => successCallback(result, statusElement, inputElement, buttonElement)).withFailureHandler(error => failureCallback(error, false, statusElement, inputElement, buttonElement))[backendFunctionName](base64Data, mimeType); // Ensure backend functions exist
+              };
+              reader.onerror = (e) => { console.error("FileReader error:", e); failureCallback('Error reading image file.', true, statusElement, inputElement, buttonElement); };
+              reader.readAsDataURL(file);
+            }
+            function handleImageFileSelect(event) { handleImageFileSelectGeneric(event, imageItemInput, itemNameStatus, itemNameCameraBtnLabel, 'identifyItemFromImage', onIdentifyNameSuccess, handleIdentifyFailure); } // Ensure backend functions exist
+            function handleQuantityImageSelect(event) { handleImageFileSelectGeneric(event, quantityImageInput, quantityStatus, quantityCameraBtnLabel, 'identifyQuantityFromImage', onIdentifyQuantitySuccess, handleIdentifyFailure); } // Ensure backend functions exist
+            function handleExpiryImageSelect(event) { handleImageFileSelectGeneric(event, expiryImageInput, expiryStatus, expiryCameraBtnLabel, 'identifyExpiryDateFromImage', onIdentifyExpirySuccess, handleIdentifyFailure); } // Ensure backend functions exist
+
+            function onIdentifyNameSuccess(identifiedName, statusElement, inputElement, buttonElement) { if (itemNameInput) itemNameInput.value = identifiedName; setFieldStatus(statusElement, 'Item name identified. Please verify.', false); resetFileInput(inputElement); setButtonEnabled(buttonElement, true); if (quantityInput) quantityInput.focus(); }
+            function onIdentifyQuantitySuccess(identifiedQuantity, statusElement, inputElement, buttonElement) { if (quantityInput) quantityInput.value = identifiedQuantity; setFieldStatus(statusElement, 'Quantity extracted. Please verify.', false); resetFileInput(inputElement); setButtonEnabled(buttonElement, true); if (expiryDateInput) expiryDateInput.focus(); }
+             function onIdentifyExpirySuccess(identifiedDate, statusElement, inputElement, buttonElement) {
+                 console.log("Identified Date:", identifiedDate);
+                 if (expiryDateInput) {
+                     // Attempt to set value if it looks like YYYY-MM-DD
+                     if (/^\d{4}-\d{2}-\d{2}$/.test(identifiedDate)) {
+                         expiryDateInput.value = identifiedDate;
+                         setFieldStatus(statusElement, 'Expiry date extracted. Please verify.', false);
+                     } else if (identifiedDate && identifiedDate.trim()) { // If something was extracted but not YYYY-MM-DD
+                          // Try converting common formats like DD/MM/YYYY or MM/DD/YYYY or DD-MM-YYYY
+                          let isoDateAttempt = null;
+                          const parts = identifiedDate.split(/[\/\-]/);
+                          if (parts.length === 3) {
+                              const [p1, p2, p3] = parts;
+                               // Assuming DD/MM/YYYY or DD-MM-YYYY format based on regional preference
+                              // You might need more sophisticated parsing based on expected formats
+                              isoDateAttempt = convertToISODate(identifiedDate); // Use the helper
+                          } else {
+                              // Maybe it's just a string like "January 1, 2025" - Date constructor might handle it
+                               const dateObjAttempt = new Date(identifiedDate);
+                                if (!isNaN(dateObjAttempt.getTime())) {
+                                    isoDateAttempt = dateObjAttempt.toISOString().split('T')[0];
+                                }
+                          }
+
+                          if (isoDateAttempt && /^\d{4}-\d{2}-\d{2}$/.test(isoDateAttempt)) {
+                               expiryDateInput.value = isoDateAttempt;
+                                setFieldStatus(statusElement, `Date extracted & converted. Verify: ${isoDateAttempt}`, false);
+                          } else {
+                            setFieldStatus(statusElement, `Extracted "${identifiedDate}". Cannot parse. Enter manually.`, true);
+                          }
+                     } else { // Nothing extracted
+                         setFieldStatus(statusElement, `No date found in image. Enter manually.`, true);
+                     }
+                  }
+                 resetFileInput(inputElement);
+                 setButtonEnabled(buttonElement, true);
+             }
+
+
+            function handleIdentifyFailure(error, isClientError, statusElement, inputElement, buttonElement) { console.error("Image Identification Error:", error); const message = (error instanceof Error) ? error.message : (typeof error === 'object' && error !== null && error.message) ? error.message : (typeof error === 'string' ? error : 'Unknown identification error'); setFieldStatus(statusElement, `Error: ${message}`, true); resetFileInput(inputElement); setButtonEnabled(buttonElement, true); }
+
+            function setFieldStatus(element, message, isError = false) { if (!element) { /*console.warn("setFieldStatus: element not found");*/ return; } element.textContent = message; element.style.color = isError ? 'var(--danger-dark)' : 'var(--text-light)'; }
+            function clearAllStatuses() { if (uiType === 'mobile') { if(itemNameStatus) setFieldStatus(itemNameStatus, ''); if(quantityStatus) setFieldStatus(quantityStatus, ''); if(expiryStatus) setFieldStatus(expiryStatus, ''); } }
+            function resetFileInput(inputElement) { if (inputElement) inputElement.value = null; }
+            function setButtonEnabled(buttonElement, enabled) { if (!buttonElement) return; buttonElement.setAttribute('aria-disabled', String(!enabled)); buttonElement.style.opacity = enabled ? '1' : '0.6'; buttonElement.style.cursor = enabled ? 'pointer' : 'not-allowed'; }
+            function setFormEnabled(enabled) { if (uiType !== 'mobile' || !itemForm) return; const formElements = itemForm.querySelectorAll('input, button, label.image-extract-btn'); formElements.forEach(el => { if (el.tagName === 'INPUT' || el.tagName === 'BUTTON') { el.disabled = !enabled; } if (el.classList.contains('image-extract-btn')) { setButtonEnabled(el, enabled); } }); }
+
+            function updatePageIndicator() {
+              // Ensure mobile UI elements are accessible before proceeding
+              if (uiType !== 'mobile' || !mobileSwiperContainer || !pageIndicator || !totalSlides || totalSlides === 0) {
+                  return;
+              }
+
+              const scrollLeft = mobileSwiperContainer.scrollLeft;
+              const containerWidth = mobileSwiperContainer.offsetWidth;
+
+              // Calculate index based on which slide start is closest to the left edge
+              let currentIndex = 0;
+              if (containerWidth > 0) { // Avoid division by zero
+                 currentIndex = Math.round(scrollLeft / containerWidth);
+              }
+
+              // Convert 0-based index to 1-based for display and clamp within bounds
+              const displayIndex = Math.max(1, Math.min(currentIndex + 1, totalSlides));
+
+              // --- Logic for Conditional Text ---
+              let indicatorText = ""; // Initialize empty string
+              const baseText = `${displayIndex} / ${totalSlides} pages`;
+
+              if (totalSlides <= 1) { // Handle case with only one slide
+                  indicatorText = baseText;
+              } else if (displayIndex === 1) { // First page
+                  indicatorText = `        ${baseText}    Swipe ->`;
+              } else if (displayIndex === totalSlides) { // Last page
+                  indicatorText = `<- Swipe    ${baseText}        `;
+              } else { // Intermediate pages
+                  indicatorText = `<- Swipe    ${baseText}    Swipe ->`;
+              }
+              // --- End Conditional Text Logic ---
+
+              // Update the text content only if it has changed
+              if (pageIndicator.textContent !== indicatorText) {
+                  pageIndicator.textContent = indicatorText;
+              }
+            }
+      }
+
+
+      // --- Load initial data ---
+      initializeApp(); // Call the function to load data
+
+      console.log(`END initializeAppLogic for ${uiType}`);
+    } // --- End of initializeAppLogic function ---
+
+
+    // --- Start the UI loading process ---
+    window.addEventListener('load', initializeUI);
+
+  </script>
+
+</body>
+</html>
