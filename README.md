@@ -14,8 +14,8 @@ ZeroWasteChef is a **smart food management system** designed to help you reduce 
 
 ZeroWasteChef can be launched using one of the following methods:
 
-* **Direct Link:** Access the web app directly via [http://tiny.cc/zerowastechef](http://tiny.cc/zerowastechef) OR [QR Code](https://tiny.cc/tiny/qr-image/tiny.cc~zerowastechef~h~150.png).
-* **Deployment from our Google Apps Script Project:** [https://script.google.com/home/projects/ZeroWasteChef](https://script.google.com/home/projects/1IkBxGDOZc4qu04rHBbI9mRV_exdIOQ-1HrUCd_niLlCJmaCCrME4dE32/).
+* **Direct Link:** Access the web app directly via [http://tiny.cc/zerowastechef](http://tiny.cc/zerowastechef) [Preliminary Round] OR [http://tiny.cc/zerowastechef2](http://tiny.cc/zerowastechef2) [Final Round].
+* **Deployment from our Google Apps Script Project:** [https://script.google.com/home/projects/ZeroWasteChef1](https://script.google.com/home/projects/1IkBxGDOZc4qu04rHBbI9mRV_exdIOQ-1HrUCd_niLlCJmaCCrME4dE32/) [Preliminary Round] OR [https://script.google.com/home/projects/ZeroWasteChef2](https://script.google.com/d/1Ad5FGfgFPT69ePXeTBxu-wEfcJlb92P7pSX2Ssrwe_pbTkYn84GxKhsu/) [Final Round].
 * **New Project from GitHub Copy:** Requires adding a new script property with name `APIKey` and value `AIzaSyCm_kSKn7-RMgN4sqzOoL23GudSjqcVZ90`. _(for hackathon demonstration purposes)_
 
 ##
