@@ -15,10 +15,10 @@ ZeroWasteChef is a **smart food management system** designed to help you reduce 
 ZeroWasteChef can be launched using one of the following methods:
 
 * **Direct Link:** Access the web app directly via [http://tiny.cc/zerowastechef](http://tiny.cc/zerowastechef) [Preliminary Round] OR [http://tiny.cc/zerowastechef2](http://tiny.cc/zerowastechef2) [Final Round].
-* **Deployment from our Google Apps Script Project:** [https://script.google.com/home/projects/ZeroWasteChef1](https://script.google.com/home/projects/1IkBxGDOZc4qu04rHBbI9mRV_exdIOQ-1HrUCd_niLlCJmaCCrME4dE32/) [Preliminary Round] OR [https://script.google.com/home/projects/ZeroWasteChef2](https://script.google.com/d/1Ad5FGfgFPT69ePXeTBxu-wEfcJlb92P7pSX2Ssrwe_pbTkYn84GxKhsu/) [Final Round].
+* **Deployment from our Google Apps Script Project:** [https://script.google.com/home/projects/ZeroWasteChef](https://script.google.com/home/projects/1IkBxGDOZc4qu04rHBbI9mRV_exdIOQ-1HrUCd_niLlCJmaCCrME4dE32/) [Preliminary Round] OR [https://script.google.com/home/projects/ZeroWasteChef2](https://script.google.com/d/1Ad5FGfgFPT69ePXeTBxu-wEfcJlb92P7pSX2Ssrwe_pbTkYn84GxKhsu/) [Final Round].
 * **New Project from GitHub Copy:** Requires adding a new script property with name `APIKey` and value `AIzaSyCm_kSKn7-RMgN4sqzOoL23GudSjqcVZ90`. _(for hackathon demonstration purposes)_
 
 ##
-**ZeroWasteChef** was submitted for the KitaHack 2025 hackathon under team AMU. We believe ZeroWasteChef offers a practical solution to address the growing issue of food waste by empowering individuals to make smarter choices about their food consumption, directly contributing to  **SDG 12: Responsible Consumption and Production** ♻️ and indirectly supporting **SDG 13: Climate Action 🌍**.
+**ZeroWasteChef** was selected as a **Top 10 Finalist** out of **200 teams** from 40 universities nationwide at Google KitaHack 2025 hackathon, under team AMU. We believe ZeroWasteChef offers a practical solution to address the growing issue of food waste by empowering individuals to make smarter choices about their food consumption, directly contributing to  **SDG 12: Responsible Consumption and Production** ♻️ and indirectly supporting **SDG 13: Climate Action 🌍**.
 
 _For a more detailed look at the project, please see the_ 📄 **[DOCUMENTATION](DOCUMENTATION.md).**
